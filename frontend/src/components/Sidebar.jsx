@@ -7,41 +7,51 @@ import {
   ListItemText,
   ListItemIcon,
   ListItemButton,
-  Toolbar,
   Typography,
   Divider,
   IconButton,
   Collapse,
   Avatar,
   useTheme,
+  Tooltip,
+  alpha,
+  Button,
+  Paper,
+  Chip,
 } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
 import {
-  VerifiedUser,
-  Assignment,
   Dashboard,
-  Settings,
-  Help,
-  Logout,
-  ChevronLeft,
-  ExpandLess,
-  ExpandMore,
-  ViewList,
+  EmailOutlined,
   PersonSearch,
+  ViewList,
+  History,
+  Speed,
+  ArrowBackIos,
+  ViewInAr,
+  Tune,
+  HelpOutline,
+  Logout,
 } from "@mui/icons-material";
 
 const Sidebar = ({ open, onClose, drawerWidth }) => {
   const theme = useTheme();
   const location = useLocation();
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const handleSettingsClick = () => {
-    setSettingsOpen(!settingsOpen);
-  };
+  // Define helper functions first
+  const isActive = (path) => location.pathname === path;
+  const isPartOfRoute = (path) => location.pathname.startsWith(path);
 
-  // Determine if a menu item is active based on current route
-  const isActive = (path) => {
-    return location.pathname === path;
+  const [submenuOpen, setSubmenuOpen] = useState({
+    emailVerification:
+      isPartOfRoute("/dashboard/single") || isPartOfRoute("/dashboard/bulk"),
+  });
+
+  const toggleSubmenu = (key) => {
+    setSubmenuOpen((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
   };
 
   const menuItems = [
@@ -49,21 +59,34 @@ const Sidebar = ({ open, onClose, drawerWidth }) => {
       text: "Dashboard",
       icon: <Dashboard />,
       path: "/dashboard",
+      exact: true,
     },
     {
-      text: "Bulk Verification",
-      icon: <ViewList />,
-      path: "/dashboard/bulk",
-    },
-    {
-      text: "Single Verification",
-      icon: <PersonSearch />,
-      path: "/dashboard/single",
+      text: "Email Verification",
+      icon: <EmailOutlined />,
+      submenu: [
+        {
+          text: "Single Verification",
+          icon: <PersonSearch fontSize="small" />,
+          path: "/dashboard/single",
+        },
+        {
+          text: "Bulk Verification",
+          icon: <ViewList fontSize="small" />,
+          path: "/dashboard/bulk",
+        },
+      ],
     },
     {
       text: "Verification History",
-      icon: <Assignment />,
+      icon: <History />,
       path: "/dashboard/history",
+    },
+    {
+      text: "Analytics",
+      icon: <Speed />,
+      path: "/dashboard/analytics",
+      // Removed chip: "New"
     },
   ];
 
@@ -79,183 +102,330 @@ const Sidebar = ({ open, onClose, drawerWidth }) => {
           boxSizing: "border-box",
           background:
             theme.palette.mode === "light"
-              ? "linear-gradient(180deg, #f5f7fa 0%, #eef1f5 100%)"
-              : "linear-gradient(180deg, #2d3748 0%, #1a202c 100%)",
+              ? `linear-gradient(145deg, ${alpha(
+                  theme.palette.background.paper,
+                  0.9
+                )}, ${alpha(theme.palette.background.default, 0.95)})`
+              : `linear-gradient(145deg, ${alpha(
+                  theme.palette.grey[900],
+                  0.95
+                )}, ${alpha(theme.palette.grey[800], 0.9)})`,
           color: theme.palette.text.primary,
+          borderRight: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          boxShadow: open ? theme.shadows[3] : "none",
+          transition: theme.transitions.create(["box-shadow", "width"], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen,
+          }),
         },
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", p: 2 }}>
-        <Typography
-          variant="h6"
-          component="div"
+      <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        {/* Logo and Brand */}
+        <Box
           sx={{
-            flexGrow: 1,
-            fontWeight: "bold",
-            color: theme.palette.primary.main,
+            display: "flex",
+            alignItems: "center",
+            p: 2,
+            background: `linear-gradient(120deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+            color: "white",
+            height: 64,
           }}
         >
-          <VerifiedUser sx={{ mr: 1, verticalAlign: "middle" }} />
-          Verify Portal
-        </Typography>
-        {open && (
-          <IconButton onClick={onClose}>
-            <ChevronLeft />
-          </IconButton>
-        )}
-      </Box>
-
-      <Divider />
-
-      <Box sx={{ p: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-          <Avatar
-            sx={{
-              bgcolor: theme.palette.primary.main,
-              width: 40,
-              height: 40,
-              mr: 2,
-            }}
-          >
-            U
-          </Avatar>
-          <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
-              User Name
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Administrator
+          <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
+            <Avatar
+              variant="rounded"
+              sx={{
+                bgcolor: "rgba(255, 255, 255, 0.2)",
+                width: 36,
+                height: 36,
+                mr: 1.5,
+                backdropFilter: "blur(4px)",
+              }}
+            >
+              <ViewInAr />
+            </Avatar>
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{ fontWeight: "bold", letterSpacing: 0.5 }}
+            >
+              Verify<span style={{ opacity: 0.9 }}>Portal</span>
             </Typography>
           </Box>
+          {open && (
+            <Tooltip title="Collapse sidebar">
+              <IconButton onClick={onClose} sx={{ color: "white" }}>
+                <ArrowBackIos sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
-      </Box>
 
-      <Divider />
-
-      <Box sx={{ overflow: "auto", flex: 1, py: 2 }}>
-        <List>
-          {menuItems.map((item) => (
-            <ListItem
-              key={item.text}
-              disablePadding
-              sx={{ display: "block", mb: 0.5 }}
-            >
-              <ListItemButton
-                component={Link}
-                to={item.path}
-                sx={{
-                  minHeight: 48,
-                  px: 2.5,
-                  borderRadius: "8px",
-                  mx: 1,
-                  background: isActive(item.path)
-                    ? theme.palette.primary.main + "20"
-                    : "transparent",
-                  color: isActive(item.path)
-                    ? theme.palette.primary.main
-                    : "inherit",
-                  "&:hover": {
-                    background: theme.palette.action.hover,
-                  },
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 0,
-                    mr: 2,
-                    color: isActive(item.path)
-                      ? theme.palette.primary.main
-                      : "inherit",
-                  }}
-                >
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.text}
-                  primaryTypographyProps={{
-                    fontWeight: isActive(item.path) ? "bold" : "normal",
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-
-        <Divider sx={{ my: 2 }} />
-
-        <List>
-          <ListItem disablePadding>
-            <ListItemButton
-              onClick={handleSettingsClick}
-              sx={{ px: 2.5, borderRadius: "8px", mx: 1 }}
-            >
-              <ListItemIcon sx={{ minWidth: 0, mr: 2 }}>
-                <Settings />
-              </ListItemIcon>
-              <ListItemText primary="Settings" />
-              {settingsOpen ? <ExpandLess /> : <ExpandMore />}
-            </ListItemButton>
-          </ListItem>
-
-          <Collapse in={settingsOpen} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              <ListItemButton
-                component={Link}
-                to="/dashboard/profile"
-                sx={{ pl: 7, borderRadius: "8px", mx: 1 }}
-              >
-                <ListItemText primary="Profile" />
-              </ListItemButton>
-              <ListItemButton
-                component={Link}
-                to="/dashboard/preferences"
-                sx={{ pl: 7, borderRadius: "8px", mx: 1 }}
-              >
-                <ListItemText primary="Preferences" />
-              </ListItemButton>
-            </List>
-          </Collapse>
-
-          <ListItem disablePadding>
-            <ListItemButton
-              component={Link}
-              to="/help"
-              sx={{ px: 2.5, borderRadius: "8px", mx: 1 }}
-            >
-              <ListItemIcon sx={{ minWidth: 0, mr: 2 }}>
-                <Help />
-              </ListItemIcon>
-              <ListItemText primary="Help & Support" />
-            </ListItemButton>
-          </ListItem>
-        </List>
-      </Box>
-
-      <Divider />
-
-      <Box sx={{ p: 2 }}>
-        <ListItemButton
-          component={Link}
-          to="/logout"
+        {/* Main Menu */}
+        <Box
           sx={{
-            borderRadius: "8px",
-            "&:hover": {
-              backgroundColor: theme.palette.error.main + "20",
+            overflow: "auto",
+            flex: 1,
+            py: 1.5,
+            px: 1.5,
+            "&::-webkit-scrollbar": { width: "0.4em" },
+            "&::-webkit-scrollbar-track": { background: "transparent" },
+            "&::-webkit-scrollbar-thumb": {
+              background: alpha(theme.palette.primary.main, 0.1),
+              borderRadius: "10px",
+              "&:hover": { background: alpha(theme.palette.primary.main, 0.2) },
             },
           }}
         >
-          <ListItemIcon
-            sx={{ minWidth: 0, mr: 2, color: theme.palette.error.main }}
-          >
-            <Logout />
-          </ListItemIcon>
-          <ListItemText
-            primary="Logout"
-            primaryTypographyProps={{
-              color: theme.palette.error.main,
+          <Typography
+            variant="overline"
+            color="text.secondary"
+            sx={{
+              px: 2,
+              fontSize: "0.7rem",
+              fontWeight: 600,
+              letterSpacing: 1,
+              display: "block",
+              mb: 1,
             }}
-          />
-        </ListItemButton>
+          >
+            Main Menu
+          </Typography>
+
+          <List sx={{ pt: 0 }}>
+            {menuItems.map((item) => (
+              <React.Fragment key={item.text}>
+                {item.submenu ? (
+                  <Box sx={{ mb: 0.5 }}>
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        onClick={() => toggleSubmenu("emailVerification")}
+                        sx={{
+                          minHeight: 44,
+                          px: 2,
+                          borderRadius: 2,
+                          backgroundColor: submenuOpen.emailVerification
+                            ? alpha(theme.palette.primary.main, 0.08)
+                            : "transparent",
+                          color: submenuOpen.emailVerification
+                            ? theme.palette.primary.main
+                            : theme.palette.text.primary,
+                          "&:hover": {
+                            backgroundColor: alpha(
+                              theme.palette.primary.main,
+                              0.08
+                            ),
+                          },
+                        }}
+                      >
+                        <ListItemIcon
+                          sx={{
+                            minWidth: 36,
+                            color: submenuOpen.emailVerification
+                              ? theme.palette.primary.main
+                              : alpha(theme.palette.text.primary, 0.7),
+                          }}
+                        >
+                          {item.icon}
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={item.text}
+                          primaryTypographyProps={{
+                            fontWeight: submenuOpen.emailVerification
+                              ? 600
+                              : 500,
+                            fontSize: "0.9rem",
+                          }}
+                        />
+                        {submenuOpen.emailVerification ? (
+                          <Typography variant="caption">–</Typography>
+                        ) : (
+                          <Typography variant="caption">+</Typography>
+                        )}
+                      </ListItemButton>
+                    </ListItem>
+                    <Collapse
+                      in={submenuOpen.emailVerification}
+                      timeout="auto"
+                      unmountOnExit
+                    >
+                      <List component="div" disablePadding sx={{ mt: 0.5 }}>
+                        {item.submenu.map((subItem) => (
+                          <ListItem
+                            key={subItem.text}
+                            disablePadding
+                            sx={{ mb: 0.5 }}
+                          >
+                            <ListItemButton
+                              component={Link}
+                              to={subItem.path}
+                              sx={{
+                                minHeight: 36,
+                                pl: 5,
+                                pr: 2,
+                                py: 0.5,
+                                borderRadius: 2,
+                                backgroundColor: isActive(subItem.path)
+                                  ? alpha(theme.palette.primary.main, 0.12)
+                                  : "transparent",
+                                color: isActive(subItem.path)
+                                  ? theme.palette.primary.main
+                                  : alpha(theme.palette.text.primary, 0.8),
+                                "&:hover": {
+                                  backgroundColor: alpha(
+                                    theme.palette.primary.main,
+                                    0.08
+                                  ),
+                                },
+                              }}
+                            >
+                              <ListItemIcon
+                                sx={{
+                                  minWidth: 26,
+                                  color: isActive(subItem.path)
+                                    ? theme.palette.primary.main
+                                    : alpha(theme.palette.text.primary, 0.6),
+                                }}
+                              >
+                                {subItem.icon}
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={subItem.text}
+                                primaryTypographyProps={{
+                                  fontWeight: isActive(subItem.path)
+                                    ? 600
+                                    : 400,
+                                  fontSize: "0.85rem",
+                                }}
+                              />
+                            </ListItemButton>
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Collapse>
+                  </Box>
+                ) : (
+                  <ListItem
+                    disablePadding
+                    sx={{ mb: 0.5, position: "relative" }}
+                  >
+                    <ListItemButton
+                      component={Link}
+                      to={item.path}
+                      sx={{
+                        minHeight: 44,
+                        px: 2,
+                        borderRadius: 2,
+                        backgroundColor: isActive(item.path)
+                          ? alpha(theme.palette.primary.main, 0.12)
+                          : "transparent",
+                        color: isActive(item.path)
+                          ? theme.palette.primary.main
+                          : theme.palette.text.primary,
+                        "&:hover": {
+                          backgroundColor: alpha(
+                            theme.palette.primary.main,
+                            0.08
+                          ),
+                        },
+                        position: "relative",
+                      }}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 36,
+                          color: isActive(item.path)
+                            ? theme.palette.primary.main
+                            : alpha(theme.palette.text.primary, 0.7),
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.text}
+                        primaryTypographyProps={{
+                          fontWeight: isActive(item.path) ? 600 : 500,
+                          fontSize: "0.9rem",
+                        }}
+                      />
+                      {item.badge && (
+                        <Box sx={{ position: "absolute", top: 8, right: 16 }}>
+                          <Typography variant="caption" color="error">
+                            {item.badge}
+                          </Typography>
+                        </Box>
+                      )}
+                      {item.chip && (
+                        <Chip
+                          label={item.chip}
+                          size="small"
+                          color="primary"
+                          sx={{
+                            height: 20,
+                            fontSize: "0.7rem",
+                            fontWeight: 600,
+                            borderRadius: 1,
+                            ml: 1,
+                            px: 0.5,
+                            background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                          }}
+                        />
+                      )}
+                    </ListItemButton>
+                  </ListItem>
+                )}
+              </React.Fragment>
+            ))}
+          </List>
+
+          <Typography
+            variant="overline"
+            color="text.secondary"
+            sx={{
+              px: 2,
+              fontSize: "0.7rem",
+              fontWeight: 600,
+              letterSpacing: 1,
+              display: "block",
+              mt: 2,
+              mb: 1,
+            }}
+          >
+            {/* Removed Settings & Support */}
+          </Typography>
+        </Box>
+
+        {/* Footer */}
+        <Box
+          sx={{
+            p: 2,
+            mt: "auto",
+            borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+            backgroundColor: alpha(theme.palette.background.default, 0.4),
+          }}
+        >
+          <Button
+            component={Link}
+            to="/logout"
+            fullWidth
+            variant="outlined"
+            color="error"
+            startIcon={<Logout />}
+            sx={{
+              borderRadius: 8,
+              py: 1,
+              textTransform: "none",
+              borderColor: alpha(theme.palette.error.main, 0.3),
+              "&:hover": {
+                backgroundColor: alpha(theme.palette.error.main, 0.05),
+                borderColor: theme.palette.error.main,
+              },
+            }}
+          >
+            Logout
+          </Button>
+        </Box>
       </Box>
     </Drawer>
   );
