@@ -1,41 +1,42 @@
 import React, { useState, useRef } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Tabs,
-  Tab,
+  Alert,
+  Avatar,
   Box,
-  Typography,
   Button,
+  Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Fade,
   IconButton,
-  TextField,
+  LinearProgress,
   Paper,
   Stack,
-  Chip,
-  Avatar,
-  useTheme,
-  alpha,
-  LinearProgress,
-  Fade,
-  Zoom,
+  Tab,
+  Tabs,
+  TextField,
   Tooltip,
-  Divider,
-  Alert,
+  Typography,
+  useTheme,
+  Zoom,
+  CircularProgress,
+  alpha,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import ListAltIcon from "@mui/icons-material/ListAlt";
-import FormatListNumberedIcon from "@mui/icons-material/FormatListNumbered";
-import DeleteIcon from "@mui/icons-material/Delete";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
-import DescriptionIcon from "@mui/icons-material/Description";
-import InfoIcon from "@mui/icons-material/Info";
-import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import ContentPasteIcon from "@mui/icons-material/ContentPaste";
-import EmailIcon from "@mui/icons-material/Email";
+import {
+  CheckCircle as CheckCircleIcon,
+  Close as CloseIcon,
+  CloudUpload as CloudUploadIcon,
+  ContentPaste as ContentPasteIcon,
+  Description as DescriptionIcon,
+  FormatListBulleted as FormatListBulletedIcon,
+  FormatListNumbered as FormatListNumberedIcon,
+  Delete as DeleteIcon,
+  WarningAmber as WarningAmberIcon,
+  Email as EmailIcon,
+  Info as InfoIcon,
+} from "@mui/icons-material";
 
 const AddListModal = ({ open, onClose, onListCreate }) => {
   const theme = useTheme();
@@ -59,7 +60,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
     }
   };
 
-  // Count the number of emails in pasted text
   const getEmailCount = () => {
     if (!pastedEmails) return 0;
     return pastedEmails.split(/[\n,;]/).filter((line) => {
@@ -68,20 +68,18 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
     }).length;
   };
 
-  // Get invalid lines
   const getInvalidLines = () => {
     if (!pastedEmails) return [];
     return pastedEmails
       .split(/[\n,;]/)
       .map((line) => line.trim())
       .filter((line) => line && !line.includes("@"))
-      .slice(0, 3); // Only return first 3 invalid lines
+      .slice(0, 3);
   };
 
   const invalidLines = getInvalidLines();
   const hasInvalidLines = invalidLines.length > 0;
 
-  // Handle drag events
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -92,7 +90,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
     }
   };
 
-  // Handle drop event
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -108,7 +105,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
   const simulateValidation = () => {
     setValidating(true);
     setValidationProgress(0);
-
     const progressInterval = setInterval(() => {
       setValidationProgress((prev) => {
         if (prev >= 100) {
@@ -275,10 +271,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
                   : alpha(theme.palette.background.default, 0.5),
                 transition: "all 0.25s ease",
                 cursor: "pointer",
-                "&:hover": {
-                  bgcolor: alpha(theme.palette.primary.light, 0.05),
-                  borderColor: alpha(theme.palette.primary.main, 0.3),
-                },
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -350,7 +342,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
                         <InsertDriveFileIcon sx={{ fontSize: 36 }} />
                       )}
                     </Avatar>
-
                     <Typography
                       variant="h6"
                       color="primary.main"
@@ -359,7 +350,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
                     >
                       {selectedFile.name}
                     </Typography>
-
                     <Box
                       sx={{
                         display: "flex",
@@ -380,7 +370,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
                         size="small"
                       />
                     </Box>
-
                     <Button
                       variant="outlined"
                       size="small"
@@ -422,11 +411,9 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
                       }}
                     />
                   </Box>
-
                   <Typography variant="h6" gutterBottom color="text.primary">
                     Drag & Drop Your File Here
                   </Typography>
-
                   <Typography
                     variant="body2"
                     color="text.secondary"
@@ -434,7 +421,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
                   >
                     or click to browse files
                   </Typography>
-
                   <Button
                     variant="outlined"
                     sx={{
@@ -452,8 +438,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
                   </Button>
                 </Box>
               )}
-
-              {/* Indicator for drag active state */}
               {dragActive && (
                 <Box
                   sx={{
@@ -481,67 +465,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
                 </Box>
               )}
             </Paper>
-
-            <Box sx={{ mt: 3 }}>
-              <Alert
-                severity="info"
-                variant="outlined"
-                icon={<InfoIcon />}
-                sx={{ borderRadius: 2, mb: 2 }}
-              >
-                <Typography variant="body2">
-                  The file should contain a list of email addresses, one per
-                  line or comma-separated.
-                </Typography>
-              </Alert>
-
-              <Divider
-                textAlign="left"
-                sx={{
-                  mb: 2,
-                  "&::before, &::after": {
-                    borderColor: alpha(theme.palette.divider, 0.5),
-                  },
-                }}
-              >
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  fontWeight="medium"
-                >
-                  Supported Formats
-                </Typography>
-              </Divider>
-
-              <Stack
-                direction="row"
-                spacing={1.5}
-                flexWrap="wrap"
-                useFlexGap
-                sx={{ mb: 1 }}
-              >
-                <Chip
-                  icon={<DescriptionIcon />}
-                  label="CSV Files"
-                  variant="outlined"
-                  sx={{ borderRadius: 1 }}
-                />
-                <Chip
-                  icon={<InsertDriveFileIcon />}
-                  label="Text Files (.txt)"
-                  variant="outlined"
-                  sx={{ borderRadius: 1 }}
-                />
-                <Tooltip title="Maximum file size limit">
-                  <Chip
-                    icon={<WarningAmberIcon />}
-                    label="Max: 10MB"
-                    variant="outlined"
-                    sx={{ borderRadius: 1 }}
-                  />
-                </Tooltip>
-              </Stack>
-            </Box>
           </Box>
         )}
 
@@ -557,7 +480,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
                 value={pastedEmails}
                 onChange={(e) => {
                   setPastedEmails(e.target.value);
-                  // If we have more than 10 characters typed, simulate validation
                   if (e.target.value.length > 10 && !validating) {
                     simulateValidation();
                   }
@@ -575,8 +497,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
                 }}
                 sx={{ mb: 2 }}
               />
-
-              {/* Paste from clipboard button */}
               {!pastedEmails && (
                 <Button
                   variant="outlined"
@@ -594,7 +514,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
                   Paste
                 </Button>
               )}
-
               {validating && (
                 <LinearProgress
                   variant="determinate"
@@ -611,66 +530,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
                 />
               )}
             </Box>
-
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexWrap: "wrap",
-                gap: 2,
-                mb: 2,
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Avatar
-                  sx={{
-                    width: 24,
-                    height: 24,
-                    bgcolor:
-                      getEmailCount() > 0
-                        ? alpha(theme.palette.success.main, 0.1)
-                        : alpha(theme.palette.text.disabled, 0.1),
-                    mr: 1,
-                  }}
-                >
-                  <FormatListNumberedIcon
-                    sx={{
-                      fontSize: 16,
-                      color:
-                        getEmailCount() > 0
-                          ? theme.palette.success.main
-                          : theme.palette.text.disabled,
-                    }}
-                  />
-                </Avatar>
-                <Typography
-                  variant="body2"
-                  color={
-                    getEmailCount() > 0 ? "text.primary" : "text.secondary"
-                  }
-                  fontWeight={getEmailCount() > 0 ? 500 : 400}
-                >
-                  {getEmailCount() > 0
-                    ? `Detected ${getEmailCount()} valid email${
-                        getEmailCount() !== 1 ? "s" : ""
-                      }`
-                    : "No valid emails detected"}
-                </Typography>
-              </Box>
-
-              <Chip
-                label={`${getEmailCount()} email${
-                  getEmailCount() !== 1 ? "s" : ""
-                }`}
-                color={getEmailCount() > 0 ? "primary" : "default"}
-                variant="outlined"
-                size="small"
-                icon={<EmailIcon />}
-                sx={{ borderRadius: 6 }}
-              />
-            </Box>
-
             {hasInvalidLines && (
               <Alert
                 severity="warning"
@@ -694,51 +553,6 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
                 </Box>
               </Alert>
             )}
-
-            <Divider
-              textAlign="left"
-              sx={{
-                mb: 2,
-                "&::before, &::after": {
-                  borderColor: alpha(theme.palette.divider, 0.5),
-                },
-              }}
-            >
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                fontWeight="medium"
-              >
-                Format Tips
-              </Typography>
-            </Divider>
-
-            <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-              <Chip
-                size="small"
-                label="One email per line"
-                variant="outlined"
-                sx={{ borderRadius: 1 }}
-              />
-              <Chip
-                size="small"
-                label="Or comma-separated"
-                variant="outlined"
-                sx={{ borderRadius: 1 }}
-              />
-              <Chip
-                size="small"
-                label="Semicolons also work"
-                variant="outlined"
-                sx={{ borderRadius: 1 }}
-              />
-              <Chip
-                size="small"
-                label="Max 1000 emails"
-                variant="outlined"
-                sx={{ borderRadius: 1 }}
-              />
-            </Stack>
           </Box>
         )}
       </DialogContent>
@@ -746,7 +560,7 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           alignItems: "center",
           p: 3,
           borderTop: 1,
@@ -754,56 +568,44 @@ const AddListModal = ({ open, onClose, onListCreate }) => {
           backgroundColor: alpha(theme.palette.background.default, 0.5),
         }}
       >
-        <Typography variant="body2" color="text.secondary">
-          {tabValue === 0
-            ? selectedFile
-              ? `File: ${selectedFile.name}`
-              : "No file selected"
-            : `${getEmailCount()} valid email${
-                getEmailCount() !== 1 ? "s" : ""
-              } found`}
-        </Typography>
-
-        <Box>
-          <Button
-            variant="outlined"
-            onClick={onClose}
-            sx={{
-              mr: 1.5,
-              borderRadius: 6,
-              textTransform: "none",
-              px: 3,
-              borderColor: alpha(theme.palette.text.secondary, 0.3),
-              color: theme.palette.text.secondary,
-              "&:hover": {
-                borderColor: alpha(theme.palette.text.secondary, 0.5),
-                backgroundColor: alpha(theme.palette.text.secondary, 0.05),
-              },
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleCreateList}
-            disabled={
-              validating ||
-              (tabValue === 0 && !selectedFile) ||
-              (tabValue === 1 && getEmailCount() === 0)
-            }
-            startIcon={<CheckCircleIcon />}
-            sx={{
-              borderRadius: 6,
-              textTransform: "none",
-              px: 3,
-              boxShadow: 2,
-              fontWeight: "bold",
-              minWidth: 120,
-            }}
-          >
-            {validating ? "Validating..." : "Add to List"}
-          </Button>
-        </Box>
+        <Button
+          variant="outlined"
+          onClick={onClose}
+          sx={{
+            mr: 1.5,
+            borderRadius: 6,
+            textTransform: "none",
+            px: 3,
+            borderColor: alpha(theme.palette.text.secondary, 0.3),
+            color: theme.palette.text.secondary,
+            "&:hover": {
+              borderColor: alpha(theme.palette.text.secondary, 0.5),
+              backgroundColor: alpha(theme.palette.text.secondary, 0.05),
+            },
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleCreateList}
+          disabled={
+            validating ||
+            (tabValue === 0 && !selectedFile) ||
+            (tabValue === 1 && getEmailCount() === 0)
+          }
+          startIcon={<CheckCircleIcon />}
+          sx={{
+            borderRadius: 6,
+            textTransform: "none",
+            px: 3,
+            boxShadow: 2,
+            fontWeight: "bold",
+            minWidth: 120,
+          }}
+        >
+          {validating ? "Validating..." : "Add to List"}
+        </Button>
       </Box>
     </Dialog>
   );

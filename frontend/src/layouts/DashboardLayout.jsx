@@ -93,8 +93,8 @@ const DashboardLayout = () => {
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === "/dashboard") return "Dashboard";
-    if (path === "/dashboard/single") return "Shail Automation";
-    if (path === "/dashboard/bulk") return "Shail Automation";
+    if (path === "/dashboard/single") return "Shail Digital";
+    if (path === "/dashboard/bulk") return "Shail Digital";
     if (path === "/dashboard/history") return "Verification History";
     if (path === "/dashboard/analytics") return "Analytics";
     return "Dashboard";

@@ -12,7 +12,6 @@ import {
   Divider,
   List,
   ListItem,
-  ListItemText,
   Stack,
   Accordion,
   AccordionSummary,
@@ -21,33 +20,30 @@ import {
   Container,
   useTheme,
   alpha,
-  TextField,
   Alert,
-  Badge,
   LinearProgress,
   Tooltip,
   Avatar,
   Fade,
   Zoom,
-  Collapse,
+  Badge, // still imported if needed elsewhere
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ErrorIcon from "@mui/icons-material/Error";
-import WarningIcon from "@mui/icons-material/Warning";
-import EmailIcon from "@mui/icons-material/Email";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import FileUploadIcon from "@mui/icons-material/FileUpload";
-import ContentPasteIcon from "@mui/icons-material/ContentPaste";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
-import DeleteIcon from "@mui/icons-material/Delete";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import CloudDoneIcon from "@mui/icons-material/CloudDone";
-import AssessmentIcon from "@mui/icons-material/Assessment";
+import {
+  CheckCircle,
+  Error,
+  Warning,
+  Email,
+  FileDownload,
+  ExpandMore,
+  FilterList,
+  CloudUpload,
+  InsertDriveFile,
+  Delete,
+  RestartAlt,
+  CloudDone,
+  Assessment,
+} from "@mui/icons-material";
 import AddListModal from "../components/AddListModal";
 import axios from "axios";
 
@@ -95,8 +91,9 @@ const StyledAccordionDetails = styled(AccordionDetails)(({ theme }) => ({
   backgroundColor: alpha(theme.palette.background.paper, 0.9),
 }));
 
-// ----- Improved Download Button -----
-const DownloadButton = ({ onClick, count }) => (
+// ----- Improved Download Button (used in accordions) -----
+// Removed the Badge and count display.
+const DownloadButton = ({ onClick }) => (
   <Tooltip title="Export as CSV">
     <IconButton
       onClick={(e) => {
@@ -114,31 +111,24 @@ const DownloadButton = ({ onClick, count }) => (
         },
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center" }}>
-        <Badge badgeContent={count} color="primary" sx={{ mr: 0.5 }}>
-          <FileDownloadIcon sx={{ color: "inherit" }} />
-        </Badge>
-        <Typography
-          variant="caption"
-          sx={{ color: "inherit", fontWeight: 500 }}
-        >
-          Export
-        </Typography>
-      </Box>
+      <Typography variant="caption" sx={{ color: "inherit", fontWeight: 500 }}>
+        Export
+      </Typography>
     </IconButton>
   </Tooltip>
 );
 
 // ----- Improved Email List Item -----
-const EmailListItem = ({ email, status, icon, color, message, onDelete }) => (
+// Removed the message text and on-hover style.
+const EmailListItem = ({ email, status, icon, color, onDelete }) => (
   <ListItem
     sx={{
       borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
-      transition: "background-color 0.2s, transform 0.2s",
-      "&:hover": {
-        backgroundColor: "rgba(0, 0, 0, 0.02)",
-        transform: "translateX(2px)",
-      },
+      // Removed hover effect:
+      // "&:hover": {
+      //   backgroundColor: "rgba(0, 0, 0, 0.02)",
+      //   transform: "translateX(2px)",
+      // },
       "&:last-child": {
         borderBottom: "none",
       },
@@ -162,14 +152,6 @@ const EmailListItem = ({ email, status, icon, color, message, onDelete }) => (
           >
             {email}
           </Typography>
-          {message && (
-            <Typography
-              variant="caption"
-              sx={{ color: color, display: "block", mt: 0.5 }}
-            >
-              {message}
-            </Typography>
-          )}
         </Box>
       </Box>
       <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -190,9 +172,9 @@ const EmailListItem = ({ email, status, icon, color, message, onDelete }) => (
             <IconButton
               size="small"
               onClick={() => onDelete(email)}
-              sx={{ opacity: 0.6, "&:hover": { opacity: 1 } }}
+              sx={{ opacity: 0.6 }}
             >
-              <DeleteIcon fontSize="small" />
+              <Delete fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
@@ -320,18 +302,15 @@ const BulkEmailVerification = () => {
   const [emails, setEmails] = useState([]);
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showEmailList, setShowEmailList] = useState(false);
   const [activeAccordion, setActiveAccordion] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [verificationProgress, setVerificationProgress] = useState(0);
-  const [filter, setFilter] = useState("all");
 
   const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => setOpenModal(false);
 
   const handleListCreate = (data) => {
     setUploadProgress(0);
-
     const progressInterval = setInterval(() => {
       setUploadProgress((prev) => {
         if (prev >= 95) {
@@ -355,8 +334,6 @@ const BulkEmailVerification = () => {
             const columns = line.split(",");
             return columns[0].trim();
           });
-        } else if (fileExtension === "txt") {
-          emailList = fileContent.split(/\r\n|\n/).map((line) => line.trim());
         } else {
           emailList = fileContent.split(/\r\n|\n/).map((line) => line.trim());
         }
@@ -369,11 +346,8 @@ const BulkEmailVerification = () => {
             !email.toLowerCase().includes("name")
         );
         const uniqueEmails = [...new Set(filteredEmails)];
-
-        // Complete the progress and reset
         clearInterval(progressInterval);
         setUploadProgress(100);
-
         setTimeout(() => {
           setEmails(uniqueEmails);
           setResults(null);
@@ -381,20 +355,6 @@ const BulkEmailVerification = () => {
         }, 500);
       };
       reader.readAsText(file);
-    } else if (data.type === "paste") {
-      const uniqueEmails = [
-        ...new Set(data.emails.filter((email) => email.trim() !== "")),
-      ];
-
-      // Complete the progress and reset
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-
-      setTimeout(() => {
-        setEmails(uniqueEmails);
-        setResults(null);
-        setUploadProgress(0);
-      }, 500);
     }
   };
 
@@ -410,8 +370,6 @@ const BulkEmailVerification = () => {
     setLoading(true);
     setResults(null);
     setVerificationProgress(0);
-
-    // Simulate progress for better UX
     const progressInterval = setInterval(() => {
       setVerificationProgress((prev) => {
         if (prev >= 95) {
@@ -427,16 +385,11 @@ const BulkEmailVerification = () => {
         "http://localhost:3001/api/bulk-verify",
         { emails }
       );
-
-      // Complete the progress
       clearInterval(progressInterval);
       setVerificationProgress(100);
-
-      // Set results after a small delay to show 100% progress
       setTimeout(() => {
         setResults(response.data.results);
         setVerificationProgress(0);
-        // Show valid emails by default if there are any
         if (response.data.results.some((r) => r.status === "valid")) {
           setActiveAccordion("valid");
         } else if (response.data.results.some((r) => r.status === "risky")) {
@@ -487,7 +440,6 @@ const BulkEmailVerification = () => {
   };
 
   const summary = getResultsSummary();
-
   const validEmails = results
     ? results.filter((r) => r.status === "valid")
     : [];
@@ -532,7 +484,7 @@ const BulkEmailVerification = () => {
           </Typography>
         </Box>
 
-        {/* Main Card */}
+        {/* Main Card with Add Emails section */}
         <Card
           sx={{
             mx: 3,
@@ -543,7 +495,6 @@ const BulkEmailVerification = () => {
           }}
         >
           <CardContent sx={{ p: 3 }}>
-            {/* Email List Addition and Preview */}
             <Grid container spacing={3}>
               <Grid item xs={12} md={4}>
                 <Card
@@ -572,7 +523,7 @@ const BulkEmailVerification = () => {
                       p: 3,
                     }}
                   >
-                    <Box>
+                    <Box sx={{ mb: 3 }}>
                       <Box
                         sx={{ display: "flex", alignItems: "center", mb: 2 }}
                       >
@@ -586,7 +537,7 @@ const BulkEmailVerification = () => {
                             mr: 1.5,
                           }}
                         >
-                          <CloudUploadIcon />
+                          <CloudUpload />
                         </Avatar>
                         <Typography variant="h6" component="div">
                           Add Emails
@@ -597,95 +548,15 @@ const BulkEmailVerification = () => {
                         color="text.secondary"
                         sx={{ mb: 3 }}
                       >
-                        Upload a CSV/TXT file containing email addresses or
-                        paste a list of emails to verify in bulk
+                        Upload a CSV file containing email addresses or paste a
+                        list of emails to verify in bulk
                       </Typography>
-
-                      <Grid container spacing={2} sx={{ mb: 3 }}>
-                        <Grid item xs={6}>
-                          <Paper
-                            elevation={0}
-                            variant="outlined"
-                            sx={{
-                              p: 2,
-                              textAlign: "center",
-                              borderRadius: 1.5,
-                              height: "100%",
-                              backgroundColor: alpha(
-                                theme.palette.primary.light,
-                                0.05
-                              ),
-                              cursor: "pointer",
-                              transition: "all 0.2s",
-                              "&:hover": {
-                                backgroundColor: alpha(
-                                  theme.palette.primary.light,
-                                  0.1
-                                ),
-                                transform: "translateY(-2px)",
-                              },
-                            }}
-                            onClick={() => {
-                              handleOpenModal();
-                              // Set the modal to file upload mode
-                              // This would require the modal component to accept an initialMode prop
-                            }}
-                          >
-                            <FileUploadIcon
-                              color="primary"
-                              sx={{ fontSize: 32, mb: 1 }}
-                            />
-                            <Typography variant="body2" fontWeight="medium">
-                              Upload File
-                            </Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Paper
-                            elevation={0}
-                            variant="outlined"
-                            sx={{
-                              p: 2,
-                              textAlign: "center",
-                              borderRadius: 1.5,
-                              height: "100%",
-                              backgroundColor: alpha(
-                                theme.palette.primary.light,
-                                0.05
-                              ),
-                              cursor: "pointer",
-                              transition: "all 0.2s",
-                              "&:hover": {
-                                backgroundColor: alpha(
-                                  theme.palette.primary.light,
-                                  0.1
-                                ),
-                                transform: "translateY(-2px)",
-                              },
-                            }}
-                            onClick={() => {
-                              handleOpenModal();
-                              // Set the modal to paste mode
-                              // This would require the modal component to accept an initialMode prop
-                            }}
-                          >
-                            <ContentPasteIcon
-                              color="primary"
-                              sx={{ fontSize: 32, mb: 1 }}
-                            />
-                            <Typography variant="body2" fontWeight="medium">
-                              Paste List
-                            </Typography>
-                          </Paper>
-                        </Grid>
-                      </Grid>
                     </Box>
-
                     <Button
                       variant="contained"
                       fullWidth
                       onClick={handleOpenModal}
-                      startIcon={<EmailIcon />}
+                      startIcon={<Email />}
                       size="large"
                       sx={{
                         borderRadius: 2,
@@ -698,7 +569,6 @@ const BulkEmailVerification = () => {
                       Add Email List
                     </Button>
                   </CardContent>
-
                   {uploadProgress > 0 && (
                     <LinearProgress
                       variant="determinate"
@@ -732,7 +602,7 @@ const BulkEmailVerification = () => {
                       <Stack
                         direction={{ xs: "column", sm: "row" }}
                         justifyContent="space-between"
-                        alignItems={{ xs: "stretch", sm: "center" }}
+                        alignItems="center"
                         spacing={2}
                         sx={{ mb: 2 }}
                       >
@@ -749,7 +619,7 @@ const BulkEmailVerification = () => {
                             }}
                           >
                             <Chip
-                              icon={<EmailIcon />}
+                              icon={<Email />}
                               label={`${emails.length} emails`}
                               color="primary"
                               variant="outlined"
@@ -759,30 +629,14 @@ const BulkEmailVerification = () => {
                                 fontWeight: 500,
                               }}
                             />
-                            <Button
-                              variant="text"
-                              size="small"
-                              onClick={() => setShowEmailList(!showEmailList)}
-                              endIcon={
-                                showEmailList ? (
-                                  <ExpandLessIcon />
-                                ) : (
-                                  <ExpandMoreIcon />
-                                )
-                              }
-                              sx={{ textTransform: "none" }}
-                            >
-                              {showEmailList ? "Hide List" : "Show List"}
-                            </Button>
                           </Box>
                         </Box>
-
                         <Stack direction="row" spacing={1.5}>
                           <Button
                             variant="outlined"
                             color="error"
                             onClick={() => setEmails([])}
-                            startIcon={<DeleteIcon />}
+                            startIcon={<Delete />}
                             disabled={loading}
                             sx={{
                               borderRadius: 6,
@@ -801,7 +655,7 @@ const BulkEmailVerification = () => {
                               loading ? (
                                 <CircularProgress size={20} color="inherit" />
                               ) : (
-                                <CheckCircleIcon />
+                                <CheckCircle />
                               )
                             }
                             sx={{
@@ -816,57 +670,40 @@ const BulkEmailVerification = () => {
                         </Stack>
                       </Stack>
 
-                      <Collapse in={showEmailList}>
-                        <Paper
-                          variant="outlined"
-                          sx={{
-                            maxHeight: 200,
-                            overflow: "auto",
-                            mb: 2,
-                            borderRadius: 1.5,
-                            backgroundColor: alpha(
-                              theme.palette.background.default,
-                              0.6
-                            ),
-                          }}
-                        >
-                          <List dense disablePadding>
-                            {emails.slice(0, 100).map((email, idx) => (
-                              <EmailListItem
-                                key={idx}
-                                email={email}
-                                status="Pending"
-                                icon={
-                                  <EmailIcon
-                                    color="action"
-                                    sx={{ opacity: 0.6 }}
-                                  />
-                                }
-                                color={theme.palette.text.secondary}
-                                onDelete={handleDeleteEmail}
-                              />
-                            ))}
-                            {emails.length > 100 && (
-                              <ListItem
-                                sx={{ justifyContent: "center", py: 2 }}
-                              >
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                >
-                                  + {emails.length - 100} more emails
-                                </Typography>
-                              </ListItem>
-                            )}
-                          </List>
-                        </Paper>
-                      </Collapse>
+                      <Paper
+                        variant="outlined"
+                        sx={{
+                          maxHeight: 200,
+                          overflow: "auto",
+                          mb: 2,
+                          borderRadius: 1.5,
+                          backgroundColor: alpha(
+                            theme.palette.background.default,
+                            0.6
+                          ),
+                        }}
+                      >
+                        <List dense disablePadding>
+                          {emails.map((email, idx) => (
+                            <EmailListItem
+                              key={idx}
+                              email={email}
+                              status="Pending"
+                              icon={
+                                <Email color="action" sx={{ opacity: 0.6 }} />
+                              }
+                              color={theme.palette.text.secondary}
+                              onDelete={handleDeleteEmail}
+                            />
+                          ))}
+                        </List>
+                      </Paper>
 
                       <Box sx={{ mt: "auto" }}>
                         <Alert
                           severity="info"
                           variant="outlined"
-                          icon={<AssessmentIcon />}
+                          icon={<Assessment />}
                           sx={{
                             borderRadius: 1.5,
                             alignItems: "center",
@@ -884,7 +721,6 @@ const BulkEmailVerification = () => {
                         </Alert>
                       </Box>
                     </CardContent>
-
                     {loading && verificationProgress > 0 && (
                       <LinearProgress
                         variant="determinate"
@@ -911,7 +747,7 @@ const BulkEmailVerification = () => {
                       border: `1px dashed ${alpha(theme.palette.divider, 0.7)}`,
                     }}
                   >
-                    <InsertDriveFileIcon
+                    <InsertDriveFile
                       sx={{
                         fontSize: 60,
                         color: alpha(theme.palette.text.secondary, 0.5),
@@ -932,21 +768,8 @@ const BulkEmailVerification = () => {
                       align="center"
                       sx={{ mb: 3, maxWidth: 300 }}
                     >
-                      Upload a CSV file or paste a list of email addresses to
-                      get started
+                      Upload a CSV file to get started
                     </Typography>
-                    <Button
-                      variant="outlined"
-                      onClick={handleOpenModal}
-                      startIcon={<FileUploadIcon />}
-                      sx={{
-                        borderRadius: 6,
-                        textTransform: "none",
-                        px: 3,
-                      }}
-                    >
-                      Add Emails
-                    </Button>
                   </Card>
                 )}
               </Grid>
@@ -1025,15 +848,11 @@ const BulkEmailVerification = () => {
                     Complete analysis of {summary.total} email addresses
                   </Typography>
                 </Box>
-
                 <Button
                   variant="outlined"
-                  startIcon={<RestartAltIcon />}
+                  startIcon={<RestartAlt />}
                   onClick={resetVerification}
-                  sx={{
-                    borderRadius: 6,
-                    textTransform: "none",
-                  }}
+                  sx={{ borderRadius: 6, textTransform: "none" }}
                 >
                   New Verification
                 </Button>
@@ -1088,33 +907,6 @@ const BulkEmailVerification = () => {
                           {((summary.valid / summary.total) * 100).toFixed(1)}%
                           of total
                         </Typography>
-                        {summary.valid > 0 && (
-                          <Chip
-                            label="View"
-                            size="small"
-                            onClick={() => {
-                              setActiveAccordion("valid");
-                              window.scrollTo({
-                                top:
-                                  document.getElementById("detailed-results")
-                                    .offsetTop - 20,
-                                behavior: "smooth",
-                              });
-                            }}
-                            sx={{
-                              ml: 1,
-                              height: 20,
-                              backgroundColor: alpha(
-                                theme.palette.success.main,
-                                0.1
-                              ),
-                              color: theme.palette.success.main,
-                              fontWeight: 500,
-                              fontSize: "0.7rem",
-                              cursor: "pointer",
-                            }}
-                          />
-                        )}
                       </Box>
                     </CardContent>
                   </Card>
@@ -1167,33 +959,6 @@ const BulkEmailVerification = () => {
                           {((summary.risky / summary.total) * 100).toFixed(1)}%
                           of total
                         </Typography>
-                        {summary.risky > 0 && (
-                          <Chip
-                            label="View"
-                            size="small"
-                            onClick={() => {
-                              setActiveAccordion("risky");
-                              window.scrollTo({
-                                top:
-                                  document.getElementById("detailed-results")
-                                    .offsetTop - 20,
-                                behavior: "smooth",
-                              });
-                            }}
-                            sx={{
-                              ml: 1,
-                              height: 20,
-                              backgroundColor: alpha(
-                                theme.palette.warning.main,
-                                0.1
-                              ),
-                              color: theme.palette.warning.main,
-                              fontWeight: 500,
-                              fontSize: "0.7rem",
-                              cursor: "pointer",
-                            }}
-                          />
-                        )}
                       </Box>
                     </CardContent>
                   </Card>
@@ -1228,14 +993,13 @@ const BulkEmailVerification = () => {
                       <Typography
                         variant="subtitle2"
                         gutterBottom
-                        color="text.secondary"
+                        sx={{ color: "black" }}
                       >
-                        Invalid Emails
+                        Invalid Emails ({invalidEmails.length})
                       </Typography>
                       <Typography
                         variant="h3"
-                        color="error.main"
-                        sx={{ fontWeight: 600 }}
+                        sx={{ fontWeight: 600, color: "black" }}
                       >
                         {summary.invalid}
                       </Typography>
@@ -1246,33 +1010,6 @@ const BulkEmailVerification = () => {
                           {((summary.invalid / summary.total) * 100).toFixed(1)}
                           % of total
                         </Typography>
-                        {summary.invalid > 0 && (
-                          <Chip
-                            label="View"
-                            size="small"
-                            onClick={() => {
-                              setActiveAccordion("invalid");
-                              window.scrollTo({
-                                top:
-                                  document.getElementById("detailed-results")
-                                    .offsetTop - 20,
-                                behavior: "smooth",
-                              });
-                            }}
-                            sx={{
-                              ml: 1,
-                              height: 20,
-                              backgroundColor: alpha(
-                                theme.palette.error.main,
-                                0.1
-                              ),
-                              color: theme.palette.error.main,
-                              fontWeight: 500,
-                              fontSize: "0.7rem",
-                              cursor: "pointer",
-                            }}
-                          />
-                        )}
                       </Box>
                     </CardContent>
                   </Card>
@@ -1324,7 +1061,7 @@ const BulkEmailVerification = () => {
                         <Typography variant="body2" color="text.secondary">
                           Verification complete
                         </Typography>
-                        <CloudDoneIcon
+                        <CloudDone
                           sx={{
                             ml: 1,
                             color: theme.palette.primary.main,
@@ -1363,7 +1100,6 @@ const BulkEmailVerification = () => {
                         <Typography variant="h6" sx={{ mb: 3 }}>
                           Email Validation Summary
                         </Typography>
-
                         <Box
                           sx={{ display: "flex", alignItems: "center", mb: 2 }}
                         >
@@ -1393,7 +1129,6 @@ const BulkEmailVerification = () => {
                             %)
                           </Typography>
                         </Box>
-
                         <Box
                           sx={{ display: "flex", alignItems: "center", mb: 2 }}
                         >
@@ -1423,7 +1158,6 @@ const BulkEmailVerification = () => {
                             %)
                           </Typography>
                         </Box>
-
                         <Box
                           sx={{ display: "flex", alignItems: "center", mb: 2 }}
                         >
@@ -1455,41 +1189,14 @@ const BulkEmailVerification = () => {
                             %)
                           </Typography>
                         </Box>
-
                         <Divider sx={{ my: 2, opacity: 0.6 }} />
-
                         <Box sx={{ display: "flex", alignItems: "center" }}>
                           <Typography variant="body2" color="text.secondary">
                             Total processed: {summary.total} emails
                           </Typography>
-
-                          <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
-                            <Tooltip title="Export all results">
-                              <IconButton
-                                size="small"
-                                onClick={() => downloadEmails(results, "all")}
-                                sx={{
-                                  color: theme.palette.primary.main,
-                                  backgroundColor: alpha(
-                                    theme.palette.primary.main,
-                                    0.1
-                                  ),
-                                  "&:hover": {
-                                    backgroundColor: alpha(
-                                      theme.palette.primary.main,
-                                      0.2
-                                    ),
-                                  },
-                                }}
-                              >
-                                <FileDownloadIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
                         </Box>
                       </Box>
                     </Grid>
-
                     <Grid
                       item
                       xs={12}
@@ -1529,24 +1236,14 @@ const BulkEmailVerification = () => {
                 >
                   Detailed Results
                 </Typography>
-
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    mb: 2,
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <FilterListIcon
-                      fontSize="small"
-                      sx={{ mr: 1, color: theme.palette.text.secondary }}
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      Filter results by status
-                    </Typography>
-                  </Box>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <FilterList
+                    sx={{ mr: 1, color: theme.palette.text.secondary }}
+                    fontSize="small"
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    Filter results by status
+                  </Typography>
                 </Box>
 
                 {validEmails.length > 0 && (
@@ -1558,7 +1255,7 @@ const BulkEmailVerification = () => {
                     >
                       <StyledAccordionSummary
                         expandIcon={
-                          <ExpandMoreIcon
+                          <ExpandMore
                             sx={{
                               color: theme.palette.getContrastText(
                                 theme.palette.success.light
@@ -1576,14 +1273,13 @@ const BulkEmailVerification = () => {
                           }}
                         >
                           <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <CheckCircleIcon sx={{ mr: 1 }} />
+                            <CheckCircle sx={{ mr: 1 }} />
                             <Typography variant="subtitle1" fontWeight="medium">
                               Valid Emails ({validEmails.length})
                             </Typography>
                           </Box>
                           <DownloadButton
                             onClick={() => downloadEmails(validEmails, "valid")}
-                            count={validEmails.length}
                           />
                         </Box>
                       </StyledAccordionSummary>
@@ -1594,9 +1290,7 @@ const BulkEmailVerification = () => {
                             maxHeight: "350px",
                             overflow: "auto",
                             scrollbarWidth: "thin",
-                            "&::-webkit-scrollbar": {
-                              width: "6px",
-                            },
+                            "&::-webkit-scrollbar": { width: "6px" },
                             "&::-webkit-scrollbar-track": {
                               background: alpha(
                                 theme.palette.common.black,
@@ -1618,15 +1312,12 @@ const BulkEmailVerification = () => {
                               email={item.email}
                               status="Valid"
                               icon={
-                                <CheckCircleIcon
+                                <CheckCircle
                                   sx={{ color: theme.palette.success.main }}
                                 />
                               }
                               color={theme.palette.success.main}
-                              message={
-                                item.message ||
-                                "Email address is valid and deliverable"
-                              }
+                              onDelete={null}
                             />
                           ))}
                         </List>
@@ -1644,7 +1335,7 @@ const BulkEmailVerification = () => {
                     >
                       <StyledAccordionSummary
                         expandIcon={
-                          <ExpandMoreIcon
+                          <ExpandMore
                             sx={{
                               color: theme.palette.getContrastText(
                                 theme.palette.warning.light
@@ -1662,14 +1353,13 @@ const BulkEmailVerification = () => {
                           }}
                         >
                           <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <WarningIcon sx={{ mr: 1 }} />
+                            <Warning sx={{ mr: 1 }} />
                             <Typography variant="subtitle1" fontWeight="medium">
                               Risky Emails ({riskyEmails.length})
                             </Typography>
                           </Box>
                           <DownloadButton
                             onClick={() => downloadEmails(riskyEmails, "risky")}
-                            count={riskyEmails.length}
                           />
                         </Box>
                       </StyledAccordionSummary>
@@ -1680,9 +1370,7 @@ const BulkEmailVerification = () => {
                             maxHeight: "350px",
                             overflow: "auto",
                             scrollbarWidth: "thin",
-                            "&::-webkit-scrollbar": {
-                              width: "6px",
-                            },
+                            "&::-webkit-scrollbar": { width: "6px" },
                             "&::-webkit-scrollbar-track": {
                               background: alpha(
                                 theme.palette.common.black,
@@ -1704,15 +1392,12 @@ const BulkEmailVerification = () => {
                               email={item.email}
                               status="Risky"
                               icon={
-                                <WarningIcon
+                                <Warning
                                   sx={{ color: theme.palette.warning.main }}
                                 />
                               }
                               color={theme.palette.warning.main}
-                              message={
-                                item.message ||
-                                "Email might have deliverability issues"
-                              }
+                              onDelete={null}
                             />
                           ))}
                         </List>
@@ -1730,7 +1415,7 @@ const BulkEmailVerification = () => {
                     >
                       <StyledAccordionSummary
                         expandIcon={
-                          <ExpandMoreIcon
+                          <ExpandMore
                             sx={{
                               color: theme.palette.getContrastText(
                                 theme.palette.error.light
@@ -1748,8 +1433,12 @@ const BulkEmailVerification = () => {
                           }}
                         >
                           <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <ErrorIcon sx={{ mr: 1 }} />
-                            <Typography variant="subtitle1" fontWeight="medium">
+                            <Error sx={{ mr: 1, color: "black" }} />
+                            <Typography
+                              variant="subtitle1"
+                              fontWeight="medium"
+                              sx={{ color: "black" }}
+                            >
                               Invalid Emails ({invalidEmails.length})
                             </Typography>
                           </Box>
@@ -1757,7 +1446,6 @@ const BulkEmailVerification = () => {
                             onClick={() =>
                               downloadEmails(invalidEmails, "invalid")
                             }
-                            count={invalidEmails.length}
                           />
                         </Box>
                       </StyledAccordionSummary>
@@ -1768,9 +1456,7 @@ const BulkEmailVerification = () => {
                             maxHeight: "350px",
                             overflow: "auto",
                             scrollbarWidth: "thin",
-                            "&::-webkit-scrollbar": {
-                              width: "6px",
-                            },
+                            "&::-webkit-scrollbar": { width: "6px" },
                             "&::-webkit-scrollbar-track": {
                               background: alpha(
                                 theme.palette.common.black,
@@ -1791,16 +1477,9 @@ const BulkEmailVerification = () => {
                               key={idx}
                               email={item.email}
                               status="Invalid"
-                              icon={
-                                <ErrorIcon
-                                  sx={{ color: theme.palette.error.main }}
-                                />
-                              }
-                              color={theme.palette.error.main}
-                              message={
-                                item.message ||
-                                "Email address is invalid or undeliverable"
-                              }
+                              icon={<Error sx={{ color: "black" }} />}
+                              color={"black"}
+                              onDelete={null}
                             />
                           ))}
                         </List>
