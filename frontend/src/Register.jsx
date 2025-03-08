@@ -13,9 +13,6 @@ import {
   Paper,
   Divider,
   Alert,
-  Stepper,
-  Step,
-  StepLabel,
 } from "@mui/material";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import PersonIcon from "@mui/icons-material/Person";
@@ -24,6 +21,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
+import axios from "axios";
 
 const Register = () => {
   const [fullName, setFullName] = useState("");
@@ -36,6 +34,7 @@ const Register = () => {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [apiError, setApiError] = useState("");
   const navigate = useNavigate();
 
   const validateEmail = (email) => {
@@ -71,8 +70,6 @@ const Register = () => {
     } else {
       setPasswordError("");
     }
-
-    // Update confirm password validation when password changes
     if (confirmPassword && value !== confirmPassword) {
       setConfirmPasswordError("Passwords do not match");
     } else if (confirmPassword) {
@@ -98,12 +95,11 @@ const Register = () => {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
     // Basic validation
     let isValid = true;
-
     if (!fullName) {
       setFullNameError("Full name is required");
       isValid = false;
@@ -111,7 +107,6 @@ const Register = () => {
       setFullNameError("Name must be at least 3 characters");
       isValid = false;
     }
-
     if (!email) {
       setEmailError("Email is required");
       isValid = false;
@@ -119,7 +114,6 @@ const Register = () => {
       setEmailError("Please enter a valid email address");
       isValid = false;
     }
-
     if (!password) {
       setPasswordError("Password is required");
       isValid = false;
@@ -127,7 +121,6 @@ const Register = () => {
       setPasswordError("Password must be at least 6 characters");
       isValid = false;
     }
-
     if (!confirmPassword) {
       setConfirmPasswordError("Please confirm your password");
       isValid = false;
@@ -135,10 +128,22 @@ const Register = () => {
       setConfirmPasswordError("Passwords do not match");
       isValid = false;
     }
+    if (!isValid) return;
 
-    if (isValid) {
-      // TODO: Add real registration logic
+    try {
+      const response = await axios.post("http://localhost:3001/api/register", {
+        fullName,
+        email,
+        password,
+      });
+      console.log(response.data);
+      // After successful registration, navigate to the login page
       navigate("/login");
+    } catch (err) {
+      console.error("Registration error:", err.response?.data || err.message);
+      setApiError(
+        err.response?.data?.error || "Registration failed. Please try again."
+      );
     }
   };
 
@@ -195,6 +200,11 @@ const Register = () => {
           </Paper>
 
           <CardContent sx={{ pt: 6, px: { xs: 3, sm: 5 } }}>
+            {apiError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {apiError}
+              </Alert>
+            )}
             <Box
               component="form"
               onSubmit={handleRegister}

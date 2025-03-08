@@ -20,6 +20,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import LoginIcon from "@mui/icons-material/Login";
+import axios from "axios";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -27,6 +28,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [apiError, setApiError] = useState("");
   const navigate = useNavigate();
 
   const validateEmail = (email) => {
@@ -58,12 +60,11 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
     // Basic validation
     let isValid = true;
-
     if (!email) {
       setEmailError("Email is required");
       isValid = false;
@@ -71,15 +72,25 @@ const Login = () => {
       setEmailError("Please enter a valid email address");
       isValid = false;
     }
-
     if (!password) {
       setPasswordError("Password is required");
       isValid = false;
     }
+    if (!isValid) return;
 
-    if (isValid) {
-      // TODO: Add real authentication logic
+    try {
+      const response = await axios.post("http://localhost:3001/api/login", {
+        email,
+        password,
+      });
+      // Save token and navigate to dashboard
+      localStorage.setItem("token", response.data.token);
       navigate("/dashboard");
+    } catch (err) {
+      console.error("Login error:", err.response?.data || err.message);
+      setApiError(
+        err.response?.data?.error || "Login failed. Please try again."
+      );
     }
   };
 
@@ -136,6 +147,11 @@ const Login = () => {
           </Paper>
 
           <CardContent sx={{ pt: 6, px: { xs: 3, sm: 5 } }}>
+            {apiError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {apiError}
+              </Alert>
+            )}
             <Box
               component="form"
               onSubmit={handleLogin}
