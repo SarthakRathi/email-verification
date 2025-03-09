@@ -71,7 +71,6 @@ ChartJS.register(
 // Fallback trend labels
 const fallbackTrendLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-// StyledCard: Filter out custom prop 'hoverEffect'
 const StyledCard = styled(MuiCard, {
   shouldForwardProp: (prop) => prop !== "hoverEffect",
 })(({ theme, bgcolor, hoverEffect = true }) => ({
@@ -121,14 +120,12 @@ const GradientHeader = styled(Box)(({ theme }) => ({
   },
 }));
 
-// Donut Chart Component for Verification Results
 const VerificationDonutChart = ({ kpiData }) => {
   const theme = useTheme();
   const canvasRef = useRef(null);
 
   useEffect(() => {
     if (!canvasRef.current || !kpiData || kpiData.totalEmails === 0) return;
-
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const dpr = window.devicePixelRatio || 1;
@@ -138,7 +135,6 @@ const VerificationDonutChart = ({ kpiData }) => {
     canvas.style.width = `${size}px`;
     canvas.style.height = `${size}px`;
     ctx.scale(dpr, dpr);
-
     const centerX = size / 2;
     const centerY = size / 2;
     const radius = centerX - 20;
@@ -146,21 +142,16 @@ const VerificationDonutChart = ({ kpiData }) => {
     const riskyRatio = kpiData.risky / kpiData.totalEmails;
     const validAngle = validRatio * 2 * Math.PI;
     const riskyAngle = riskyRatio * 2 * Math.PI;
-
     ctx.clearRect(0, 0, size, size);
     ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
     ctx.shadowBlur = 10;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 2;
-
-    // Valid segment
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
     ctx.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + validAngle);
     ctx.fillStyle = theme.palette.success.main;
     ctx.fill();
-
-    // Risky segment
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
     ctx.arc(
@@ -172,8 +163,6 @@ const VerificationDonutChart = ({ kpiData }) => {
     );
     ctx.fillStyle = theme.palette.warning.main;
     ctx.fill();
-
-    // Invalid segment
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
     ctx.arc(
@@ -185,33 +174,24 @@ const VerificationDonutChart = ({ kpiData }) => {
     );
     ctx.fillStyle = theme.palette.error.main;
     ctx.fill();
-
-    // Remove shadow for inner circle
     ctx.shadowColor = "transparent";
     ctx.shadowBlur = 0;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
-
-    // Inner white circle (donut effect)
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius * 0.65, 0, 2 * Math.PI);
     ctx.fillStyle = theme.palette.background.paper;
     ctx.fill();
-
-    // Inner border
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius * 0.65, 0, 2 * Math.PI);
     ctx.strokeStyle = alpha(theme.palette.divider, 0.5);
     ctx.lineWidth = 1;
     ctx.stroke();
-
-    // Center text (valid %)
     ctx.font = `bold ${20 * dpr}px ${theme.typography.fontFamily}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = theme.palette.text.primary;
     ctx.fillText(`${Math.round(validRatio * 100)}%`, centerX, centerY - 8);
-
     ctx.font = `${14 * dpr}px ${theme.typography.fontFamily}`;
     ctx.fillStyle = theme.palette.success.main;
     ctx.fillText("Success", centerX, centerY + 12);
@@ -235,22 +215,18 @@ const VerificationDonutChart = ({ kpiData }) => {
 const Dashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
-  // Get the userId from localStorage
-  const userId = localStorage.getItem("userId");
+  // Remove userId from localStorage usage since token holds the user info
+  // const userId = localStorage.getItem("userId");
 
-  // Use fallback trend labels
   const trendLabels = fallbackTrendLabels;
-
-  // KPI data from backend (showing total emails for the user)
   const [kpiData, setKpiData] = useState({
     totalEmails: 0,
     valid: 0,
     risky: 0,
     invalid: 0,
   });
-
-  // Trends data from backend
   const [trendsData, setTrendsData] = useState({
     labels: trendLabels,
     datasets: [
@@ -268,19 +244,13 @@ const Dashboard = () => {
     ],
   });
   const [trendFilter, setTrendFilter] = useState("7d");
-
-  // Batches from backend (filtered by user_id)
   const [recentBatches, setRecentBatches] = useState([]);
-  // Modal for drill-down
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState(null);
+  const [userName, setUserName] = useState("User");
 
-  // Username from backend
-  const [userName, setUserName] = useState("");
-
-  // Fetch user details (including fullName) using token
+  // Fetch user details using token
   useEffect(() => {
-    const token = localStorage.getItem("token");
     if (token) {
       axios
         .get("http://localhost:3001/api/user", {
@@ -291,94 +261,99 @@ const Dashboard = () => {
         })
         .catch((err) => {
           console.error("Error fetching user:", err);
-          setUserName("User");
         });
     }
-  }, []);
+  }, [token]);
 
-  // Fetch verification batches for this user and compute summary
+  // Fetch verification batches without user_id query parameter; use token header instead
   useEffect(() => {
-    axios
-      .get(`http://localhost:3001/api/verification-batch?user_id=${userId}`)
-      .then((response) => {
-        const batches = response.data;
-        batches.forEach((batch) => {
-          const emails = batch.emails || [];
-          batch.total = emails.length;
-          batch.valid = emails.filter((e) => e.status === "valid").length;
-          batch.risky = emails.filter((e) => e.status === "risky").length;
-          batch.invalid = emails.filter((e) => e.status === "invalid").length;
+    if (token) {
+      axios
+        .get("http://localhost:3001/api/verification-batch", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((response) => {
+          const batches = response.data;
+          batches.forEach((batch) => {
+            const emails = batch.emails || [];
+            batch.total = emails.length;
+            batch.valid = emails.filter((e) => e.status === "valid").length;
+            batch.risky = emails.filter((e) => e.status === "risky").length;
+            batch.invalid = emails.filter((e) => e.status === "invalid").length;
+          });
+          setRecentBatches(batches);
+          const summary = batches.reduce(
+            (acc, b) => {
+              acc.totalEmails += b.total;
+              acc.valid += b.valid;
+              acc.risky += b.risky;
+              acc.invalid += b.invalid;
+              return acc;
+            },
+            { totalEmails: 0, valid: 0, risky: 0, invalid: 0 }
+          );
+          setKpiData(summary);
+        })
+        .catch((err) => {
+          console.error("Error fetching verification batches:", err);
         });
-        setRecentBatches(batches);
-        const summary = batches.reduce(
-          (acc, b) => {
-            acc.totalEmails += b.total;
-            acc.valid += b.valid;
-            acc.risky += b.risky;
-            acc.invalid += b.invalid;
-            return acc;
-          },
-          { totalEmails: 0, valid: 0, risky: 0, invalid: 0 }
-        );
-        setKpiData(summary);
-      })
-      .catch((err) => {
-        console.error("Error fetching verification batches:", err);
-      });
-  }, [userId]);
+    }
+  }, [token]);
 
-  // Fetch trends data from backend for this user
+  // Fetch trends data using token header
   useEffect(() => {
-    axios
-      .get(
-        `http://localhost:3001/api/verification-trends?range=${trendFilter}&user_id=${userId}`
-      )
-      .then((response) => {
-        const { labels, data } = response.data;
-        // Format labels to show just month & day
-        const formattedLabels = labels.map((label) =>
-          new Date(label).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-          })
-        );
-        setTrendsData({
-          labels: formattedLabels,
-          datasets: [
-            {
-              label: "Emails",
-              data,
-              borderColor: theme.palette.primary.main,
-              backgroundColor: alpha(theme.palette.primary.main, 0.1),
-              tension: 0.3,
-              fill: true,
-              pointBackgroundColor: theme.palette.primary.main,
-              pointRadius: 4,
-              pointHoverRadius: 6,
-            },
-          ],
+    if (token) {
+      axios
+        .get(
+          `http://localhost:3001/api/verification-trends?range=${trendFilter}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        .then((response) => {
+          const { labels, data } = response.data;
+          const formattedLabels = labels.map((label) =>
+            new Date(label).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+            })
+          );
+          setTrendsData({
+            labels: formattedLabels,
+            datasets: [
+              {
+                label: "Emails",
+                data,
+                borderColor: theme.palette.primary.main,
+                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                tension: 0.3,
+                fill: true,
+                pointBackgroundColor: theme.palette.primary.main,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+              },
+            ],
+          });
+        })
+        .catch((err) => {
+          console.error("Error fetching trends data:", err);
+          setTrendsData({
+            labels: trendLabels,
+            datasets: [
+              {
+                label: "Emails",
+                data: [300, 350, 400, 370, 420, 380, 410],
+                borderColor: theme.palette.primary.main,
+                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                tension: 0.3,
+                fill: true,
+                pointBackgroundColor: theme.palette.primary.main,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+              },
+            ],
+          });
         });
-      })
-      .catch((err) => {
-        console.error("Error fetching trends data:", err);
-        setTrendsData({
-          labels: trendLabels,
-          datasets: [
-            {
-              label: "Emails",
-              data: [300, 350, 400, 370, 420, 380, 410],
-              borderColor: theme.palette.primary.main,
-              backgroundColor: alpha(theme.palette.primary.main, 0.1),
-              tension: 0.3,
-              fill: true,
-              pointBackgroundColor: theme.palette.primary.main,
-              pointRadius: 4,
-              pointHoverRadius: 6,
-            },
-          ],
-        });
-      });
-  }, [trendFilter, theme, trendLabels, userId]);
+    }
+  }, [trendFilter, theme, trendLabels, token]);
 
   const chartOptions = {
     responsive: true,
@@ -441,7 +416,6 @@ const Dashboard = () => {
     const invalidEmails = selectedBatch.emails.filter(
       (e) => e.status === "invalid"
     );
-
     downloadCSV(`batch_${selectedBatch.id}_valid.csv`, validEmails);
     downloadCSV(`batch_${selectedBatch.id}_risky.csv`, riskyEmails);
     downloadCSV(`batch_${selectedBatch.id}_invalid.csv`, invalidEmails);
@@ -449,7 +423,6 @@ const Dashboard = () => {
 
   return (
     <Container maxWidth={false} sx={{ py: 4 }}>
-      {/* Header */}
       <GradientHeader>
         <Box
           sx={{
@@ -472,7 +445,6 @@ const Dashboard = () => {
             </Typography>
           </Box>
         </Box>
-        {/* Quick Actions with Navigation */}
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={2}
@@ -526,7 +498,6 @@ const Dashboard = () => {
         </Stack>
       </GradientHeader>
 
-      {/* Summary Cards Row */}
       <Grid container spacing={3} sx={{ mt: -1 }}>
         <Grid item xs={12}>
           <Card
@@ -542,7 +513,6 @@ const Dashboard = () => {
           >
             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Grid container spacing={3}>
-                {/* Total Emails */}
                 <Grid item xs={12} sm={6} md={3}>
                   <Box>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
@@ -569,7 +539,6 @@ const Dashboard = () => {
                     </Typography>
                   </Box>
                 </Grid>
-                {/* Success Rate */}
                 <Grid item xs={12} sm={6} md={3}>
                   <Box>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
@@ -608,7 +577,6 @@ const Dashboard = () => {
                     </Typography>
                   </Box>
                 </Grid>
-                {/* Risky Rate */}
                 <Grid item xs={12} sm={6} md={3}>
                   <Box>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
@@ -647,7 +615,6 @@ const Dashboard = () => {
                     </Typography>
                   </Box>
                 </Grid>
-                {/* Invalid Rate */}
                 <Grid item xs={12} sm={6} md={3}>
                   <Box>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
@@ -691,9 +658,7 @@ const Dashboard = () => {
           </Card>
         </Grid>
 
-        {/* Trends and Results: Side by Side */}
         <Grid container item xs={12} spacing={3}>
-          {/* Trends Chart (wider) */}
           <Grid item xs={12} md={8}>
             <StyledCard hoverEffect={false}>
               <CardContent sx={{ p: 3 }}>
@@ -729,7 +694,6 @@ const Dashboard = () => {
               </CardContent>
             </StyledCard>
           </Grid>
-          {/* Results Donut (narrower) */}
           <Grid item xs={12} md={4}>
             <StyledCard hoverEffect={false} sx={{ height: "100%" }}>
               <CardContent
@@ -826,7 +790,6 @@ const Dashboard = () => {
           </Grid>
         </Grid>
 
-        {/* Recent Verification Batches: Full Width */}
         <Grid container item xs={12} spacing={3}>
           <Grid item xs={12}>
             <StyledCard hoverEffect={false}>
@@ -883,10 +846,7 @@ const Dashboard = () => {
                           >
                             {new Date(batch.batch_time).toLocaleString(
                               undefined,
-                              {
-                                dateStyle: "medium",
-                                timeStyle: "short",
-                              }
+                              { dateStyle: "medium", timeStyle: "short" }
                             )}
                           </Typography>
                           <Box sx={{ mb: 2 }}>
@@ -1008,7 +968,6 @@ const Dashboard = () => {
         </Grid>
       </Grid>
 
-      {/* Drill-down Modal for Batch Details */}
       <Modal
         open={modalOpen}
         onClose={handleCloseModal}
@@ -1054,10 +1013,7 @@ const Dashboard = () => {
                   <Typography variant="subtitle2">
                     {new Date(selectedBatch.batch_time).toLocaleString(
                       undefined,
-                      {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      }
+                      { dateStyle: "medium", timeStyle: "short" }
                     )}
                   </Typography>
                 </Box>
@@ -1235,10 +1191,7 @@ const Dashboard = () => {
                           <Typography variant="body2" fontWeight="medium">
                             {new Date(selectedBatch.batch_time).toLocaleString(
                               undefined,
-                              {
-                                dateStyle: "medium",
-                                timeStyle: "short",
-                              }
+                              { dateStyle: "medium", timeStyle: "short" }
                             )}
                           </Typography>
                         </Box>

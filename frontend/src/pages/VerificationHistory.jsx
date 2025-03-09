@@ -152,7 +152,6 @@ const StatusChip = styled(Chip)(({ theme, statustype }) => {
   return { ...chipStyles, height: 28, borderRadius: theme.shape.borderRadius };
 });
 
-// ExportButton now renders as a span to avoid nesting button issues.
 const ExportButton = styled(Button)(({ theme }) => ({
   component: "span",
   borderRadius: 20,
@@ -164,8 +163,6 @@ const ExportButton = styled(Button)(({ theme }) => ({
   "&:hover": { boxShadow: theme.shadows[1] },
 }));
 
-// Format the batch_time string.
-// If the date string does not contain a "T", replace the first space with "T" to create an ISO string.
 const formatDate = (dateStr) => {
   if (!dateStr) return "";
   const isoDateStr = dateStr.includes("T")
@@ -189,17 +186,24 @@ const VerificationHistory = () => {
   const [batchToDelete, setBatchToDelete] = useState(null);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
-  // Fetch history data from the backend on mount.
+  // Get token from localStorage
+  const token = localStorage.getItem("token");
+
+  // Fetch history data from the backend on mount using token in headers.
   useEffect(() => {
-    axios
-      .get("http://localhost:3001/api/verification-batch")
-      .then((response) => {
-        setHistoryData(response.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching verification batches:", error);
-      });
-  }, []);
+    if (token) {
+      axios
+        .get("http://localhost:3001/api/verification-batch", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((response) => {
+          setHistoryData(response.data);
+        })
+        .catch((error) => {
+          console.error("Error fetching verification batches:", error);
+        });
+    }
+  }, [token]);
 
   // Helper: compute summary counts for a batch.
   const getBatchSummary = (batch) => {
@@ -239,18 +243,16 @@ const VerificationHistory = () => {
 
   const handleDeleteConfirm = async () => {
     try {
-      // Call the DELETE endpoint with the selected batch id.
+      // Use token header for delete call.
       await axios.delete(
-        `http://localhost:3001/api/verification-batch/${batchToDelete}`
+        `http://localhost:3001/api/verification-batch/${batchToDelete}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       // Remove the deleted batch from the local state.
       const updatedHistory = historyData.filter(
         (batch) => batch.id !== batchToDelete
       );
       setHistoryData(updatedHistory);
-
-      // Close the dialog and show a success message.
       setDeleteDialogOpen(false);
       setDeleteSuccess(true);
       setTimeout(() => setDeleteSuccess(false), 3000);
@@ -259,12 +261,10 @@ const VerificationHistory = () => {
     }
   };
 
-  // Accordion change handler (if you want to control expansion, add your logic here).
   const handleAccordionChange = (panel) => (event, isExpanded) => {
-    // Example: you can store the active panel in state if needed.
+    // Optional: add logic to control expansion
   };
 
-  // Compute summary counts from a results array.
   const getResultsSummary = (results) => {
     if (!results) return { valid: 0, invalid: 0, risky: 0, total: 0 };
     const valid = results.filter((r) => r.status === "valid").length;
@@ -276,7 +276,6 @@ const VerificationHistory = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Header with gradient background */}
       <Paper
         elevation={3}
         sx={{
@@ -306,8 +305,6 @@ const VerificationHistory = () => {
             View and manage your email verification batch history
           </Typography>
         </Box>
-
-        {/* Summary Card */}
         <Card
           sx={{
             mx: 3,
@@ -379,7 +376,6 @@ const VerificationHistory = () => {
         </Card>
       </Paper>
 
-      {/* Success Alert */}
       <Collapse in={deleteSuccess}>
         <Alert
           severity="success"
@@ -394,7 +390,6 @@ const VerificationHistory = () => {
         </Alert>
       </Collapse>
 
-      {/* Batches List */}
       {historyData.length > 0 ? (
         historyData.map((batch) => {
           const summary = getResultsSummary(batch.emails);
@@ -470,24 +465,15 @@ const VerificationHistory = () => {
                     >
                       <Tooltip title="Delete Batch">
                         <IconButton
+                          component="span" // Overrides the default "button" element
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteRequest(batch.id);
                           }}
                           size="small"
                           color="error"
-                          sx={{
-                            opacity: 0.7,
-                            "&:hover": {
-                              opacity: 1,
-                              backgroundColor: alpha(
-                                theme.palette.error.main,
-                                0.1
-                              ),
-                            },
-                          }}
                         >
-                          <DeleteIcon fontSize="small" />
+                          <DeleteIcon />
                         </IconButton>
                       </Tooltip>
                     </Grid>
@@ -495,7 +481,6 @@ const VerificationHistory = () => {
                 </StyledAccordionSummary>
                 <StyledAccordionDetails>
                   <Grid container spacing={3}>
-                    {/* Valid Emails Section */}
                     <Grid item xs={12} md={4}>
                       <Box sx={{ mb: { xs: 3, md: 0 } }}>
                         <Box
@@ -568,8 +553,6 @@ const VerificationHistory = () => {
                         </StyledPaper>
                       </Box>
                     </Grid>
-
-                    {/* Risky Emails Section */}
                     <Grid item xs={12} md={4}>
                       <Box sx={{ mb: { xs: 3, md: 0 } }}>
                         <Box
@@ -639,8 +622,6 @@ const VerificationHistory = () => {
                         </StyledPaper>
                       </Box>
                     </Grid>
-
-                    {/* Invalid Emails Section */}
                     <Grid item xs={12} md={4}>
                       <Box>
                         <Box
@@ -748,7 +729,6 @@ const VerificationHistory = () => {
         </Fade>
       )}
 
-      {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}

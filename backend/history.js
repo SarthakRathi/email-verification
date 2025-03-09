@@ -2,19 +2,24 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('./db');
+const authenticateToken = require('./authenticateToken');
 
-router.post('/verification-batch', async (req, res) => {
+// POST /api/verification-batch - Save a new verification batch
+router.post('/verification-batch', authenticateToken, async (req, res) => {
   try {
-    const { user_id, batchTime, emails } = req.body;
+    const { batchTime, emails } = req.body;
     
     if (!emails || !Array.isArray(emails) || emails.length === 0) {
       return res.status(400).json({ error: 'Emails array is required and cannot be empty' });
     }
     
+    // Use the authenticated user's ID from the token
+    const user_id = req.user.id;
+    
     // Insert a new batch record into verification_batches.
     const [batchResult] = await pool.query(
       'INSERT INTO verification_batches (user_id, batch_time) VALUES (?, ?)',
-      [user_id || null, batchTime || new Date()]
+      [user_id, batchTime || new Date()]
     );
     const batchId = batchResult.insertId;
     
@@ -39,14 +44,11 @@ router.post('/verification-batch', async (req, res) => {
   }
 });
 
-// GET endpoint to fetch all batches (filtered by user_id if provided) with their results
-router.get('/verification-batch', async (req, res) => {
+// GET /api/verification-batch - Fetch all batches for the authenticated user
+router.get('/verification-batch', authenticateToken, async (req, res) => {
   try {
-    const userId = req.query.user_id;
-    // If no valid user_id is provided, return an error (or empty array if you prefer)
-    if (!userId || userId === "null") {
-      return res.status(400).json({ error: "Invalid user_id" });
-    }
+    // Get the user ID from the token
+    const userId = req.user.id;
     
     const [batches] = await pool.query(
       'SELECT * FROM verification_batches WHERE user_id = ? ORDER BY batch_time DESC',
@@ -68,12 +70,18 @@ router.get('/verification-batch', async (req, res) => {
   }
 });
 
-// DELETE endpoint remains unchanged
-router.delete('/verification-batch/:id', async (req, res) => {
+// DELETE /api/verification-batch/:id - Delete a batch if it belongs to the authenticated user
+router.delete('/verification-batch/:id', authenticateToken, async (req, res) => {
   try {
     const batchId = req.params.id;
     
-    // First, delete all associated verification results
+    // Verify that the batch belongs to the authenticated user
+    const [batch] = await pool.query('SELECT user_id FROM verification_batches WHERE id = ?', [batchId]);
+    if (batch.length === 0 || batch[0].user_id !== req.user.id) {
+      return res.status(403).json({ error: "Not authorized to delete this batch" });
+    }
+    
+    // Delete associated verification results first
     await pool.query('DELETE FROM verification_results WHERE batch_id = ?', [batchId]);
     
     // Then, delete the batch record

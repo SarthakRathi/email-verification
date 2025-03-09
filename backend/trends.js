@@ -2,15 +2,14 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('./db');
+const authenticateToken = require('./authenticateToken');
 
-router.get('/verification-trends', async (req, res) => {
+// GET /api/verification-trends - Fetch trends for the authenticated user
+router.get('/verification-trends', authenticateToken, async (req, res) => {
   try {
     const range = req.query.range || '7d';
-    const userId = req.query.user_id;
-    
-    if (!userId || userId === "null") {
-      return res.status(400).json({ error: "Invalid user_id" });
-    }
+    // Get the user ID from the token instead of the query string
+    const userId = req.user.id;
     
     let startDate;
     if (range === '7d') {
@@ -22,8 +21,8 @@ router.get('/verification-trends', async (req, res) => {
     } else {
       startDate = new Date(0);
     }
-
-    let query = `
+    
+    const query = `
       SELECT DATE(vb.batch_time) as date, COALESCE(COUNT(vr.id), 0) as totalEmails
       FROM verification_batches vb
       LEFT JOIN verification_results vr ON vb.id = vr.batch_id
@@ -31,10 +30,10 @@ router.get('/verification-trends', async (req, res) => {
       GROUP BY DATE(vb.batch_time)
       ORDER BY DATE(vb.batch_time) ASC`;
     const params = [startDate, userId];
-
+    
     const [rows] = await pool.query(query, params);
-    const labels = rows.map((r) => r.date);
-    const data = rows.map((r) => r.totalEmails);
+    const labels = rows.map(r => r.date);
+    const data = rows.map(r => r.totalEmails);
     res.json({ labels, data });
   } catch (error) {
     console.error("Error fetching verification trends:", error);
