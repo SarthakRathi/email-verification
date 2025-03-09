@@ -39,11 +39,19 @@ router.post('/verification-batch', async (req, res) => {
   }
 });
 
-// GET endpoint to fetch all batches with their results
+// GET endpoint to fetch all batches (filtered by user_id if provided) with their results
 router.get('/verification-batch', async (req, res) => {
   try {
-    // Fetch all batches (most recent first)
-    const [batches] = await pool.query('SELECT * FROM verification_batches ORDER BY batch_time DESC');
+    const userId = req.query.user_id;
+    // If no valid user_id is provided, return an error (or empty array if you prefer)
+    if (!userId || userId === "null") {
+      return res.status(400).json({ error: "Invalid user_id" });
+    }
+    
+    const [batches] = await pool.query(
+      'SELECT * FROM verification_batches WHERE user_id = ? ORDER BY batch_time DESC',
+      [userId]
+    );
     
     // For each batch, fetch its email records
     for (let batch of batches) {
@@ -60,28 +68,22 @@ router.get('/verification-batch', async (req, res) => {
   }
 });
 
-// In your history.js (Express router file)
+// DELETE endpoint remains unchanged
 router.delete('/verification-batch/:id', async (req, res) => {
-    try {
-      const batchId = req.params.id;
-      
-      // First, delete all associated verification results
-      await pool.query(
-        'DELETE FROM verification_results WHERE batch_id = ?',
-        [batchId]
-      );
-      
-      // Then, delete the batch record
-      await pool.query(
-        'DELETE FROM verification_batches WHERE id = ?',
-        [batchId]
-      );
-      
-      res.json({ message: 'Verification batch deleted successfully' });
-    } catch (error) {
-      console.error('Error deleting verification batch:', error);
-      res.status(500).json({ error: 'Server error while deleting verification batch' });
-    }
-  });  
+  try {
+    const batchId = req.params.id;
+    
+    // First, delete all associated verification results
+    await pool.query('DELETE FROM verification_results WHERE batch_id = ?', [batchId]);
+    
+    // Then, delete the batch record
+    await pool.query('DELETE FROM verification_batches WHERE id = ?', [batchId]);
+    
+    res.json({ message: 'Verification batch deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting verification batch:', error);
+    res.status(500).json({ error: 'Server error while deleting verification batch' });
+  }
+});
 
 module.exports = router;

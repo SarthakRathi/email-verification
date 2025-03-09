@@ -25,6 +25,7 @@ import {
   Select,
   MenuItem,
   Card,
+  Divider,
 } from "@mui/material";
 import {
   CheckCircle,
@@ -70,7 +71,7 @@ ChartJS.register(
 // Fallback trend labels
 const fallbackTrendLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-// StyledCard using shouldForwardProp to filter out custom prop 'hoverEffect'
+// StyledCard: Filter out custom prop 'hoverEffect'
 const StyledCard = styled(MuiCard, {
   shouldForwardProp: (prop) => prop !== "hoverEffect",
 })(({ theme, bgcolor, hoverEffect = true }) => ({
@@ -143,13 +144,10 @@ const VerificationDonutChart = ({ kpiData }) => {
     const radius = centerX - 20;
     const validRatio = kpiData.valid / kpiData.totalEmails;
     const riskyRatio = kpiData.risky / kpiData.totalEmails;
-
     const validAngle = validRatio * 2 * Math.PI;
     const riskyAngle = riskyRatio * 2 * Math.PI;
 
     ctx.clearRect(0, 0, size, size);
-
-    // Draw shadow
     ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
     ctx.shadowBlur = 10;
     ctx.shadowOffsetX = 0;
@@ -238,10 +236,13 @@ const Dashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
 
+  // Get the userId from localStorage
+  const userId = localStorage.getItem("userId");
+
   // Use fallback trend labels
   const trendLabels = fallbackTrendLabels;
 
-  // KPI data from backend (showing total emails)
+  // KPI data from backend (showing total emails for the user)
   const [kpiData, setKpiData] = useState({
     totalEmails: 0,
     valid: 0,
@@ -268,7 +269,7 @@ const Dashboard = () => {
   });
   const [trendFilter, setTrendFilter] = useState("7d");
 
-  // Batches from backend
+  // Batches from backend (filtered by user_id)
   const [recentBatches, setRecentBatches] = useState([]);
   // Modal for drill-down
   const [modalOpen, setModalOpen] = useState(false);
@@ -277,7 +278,7 @@ const Dashboard = () => {
   // Username from backend
   const [userName, setUserName] = useState("");
 
-  // Fetch user name
+  // Fetch user details (including fullName) using token
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -295,10 +296,10 @@ const Dashboard = () => {
     }
   }, []);
 
-  // Fetch verification batches and compute summary
+  // Fetch verification batches for this user and compute summary
   useEffect(() => {
     axios
-      .get("http://localhost:3001/api/verification-batch")
+      .get(`http://localhost:3001/api/verification-batch?user_id=${userId}`)
       .then((response) => {
         const batches = response.data;
         batches.forEach((batch) => {
@@ -324,12 +325,14 @@ const Dashboard = () => {
       .catch((err) => {
         console.error("Error fetching verification batches:", err);
       });
-  }, []);
+  }, [userId]);
 
-  // Fetch trends data from backend
+  // Fetch trends data from backend for this user
   useEffect(() => {
     axios
-      .get(`http://localhost:3001/api/verification-trends?range=${trendFilter}`)
+      .get(
+        `http://localhost:3001/api/verification-trends?range=${trendFilter}&user_id=${userId}`
+      )
       .then((response) => {
         const { labels, data } = response.data;
         // Format labels to show just month & day
@@ -375,7 +378,7 @@ const Dashboard = () => {
           ],
         });
       });
-  }, [trendFilter, theme, trendLabels]);
+  }, [trendFilter, theme, trendLabels, userId]);
 
   const chartOptions = {
     responsive: true,
@@ -757,10 +760,7 @@ const Dashboard = () => {
                     item
                     xs={12}
                     sm={6}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                    }}
+                    sx={{ display: "flex", alignItems: "center" }}
                   >
                     <Box sx={{ width: "100%" }}>
                       <Box
@@ -827,182 +827,184 @@ const Dashboard = () => {
         </Grid>
 
         {/* Recent Verification Batches: Full Width */}
-        <Grid item xs={12}>
-          <StyledCard hoverEffect={false}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-                Recent Verification Batches
-              </Typography>
-              <Grid container spacing={2}>
-                {recentBatches.map((batch) => (
-                  <Grid item xs={12} sm={6} md={4} key={batch.id}>
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        borderRadius: 2,
-                        boxShadow: `0 4px 12px ${alpha(
-                          theme.palette.common.black,
-                          0.04
-                        )}`,
-                        transition: "all 0.3s ease",
-                        "&:hover": {
-                          boxShadow: `0 6px 16px ${alpha(
+        <Grid container item xs={12} spacing={3}>
+          <Grid item xs={12}>
+            <StyledCard hoverEffect={false}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+                  Recent Verification Batches
+                </Typography>
+                <Grid container spacing={2}>
+                  {recentBatches.map((batch) => (
+                    <Grid item xs={12} sm={6} md={4} key={batch.id}>
+                      <Card
+                        variant="outlined"
+                        sx={{
+                          borderRadius: 2,
+                          boxShadow: `0 4px 12px ${alpha(
                             theme.palette.common.black,
-                            0.08
+                            0.04
                           )}`,
-                          transform: "translateY(-2px)",
-                        },
-                      }}
-                    >
-                      <CardContent sx={{ p: 2.5 }}>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            mb: 1.5,
-                          }}
-                        >
-                          <Typography
-                            variant="subtitle1"
-                            sx={{ fontWeight: 600 }}
-                          >
-                            Batch #{batch.id}
-                          </Typography>
-                          <Tooltip title="More options">
-                            <IconButton size="small">
-                              <MoreVert fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ display: "block", mb: 1.5 }}
-                        >
-                          {new Date(batch.batch_time).toLocaleString(
-                            undefined,
-                            {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                            }
-                          )}
-                        </Typography>
-                        <Box sx={{ mb: 2 }}>
-                          <LinearProgress
-                            variant="determinate"
-                            value={(batch.valid / batch.total) * 100}
+                          transition: "all 0.3s ease",
+                          "&:hover": {
+                            boxShadow: `0 6px 16px ${alpha(
+                              theme.palette.common.black,
+                              0.08
+                            )}`,
+                            transform: "translateY(-2px)",
+                          },
+                        }}
+                      >
+                        <CardContent sx={{ p: 2.5 }}>
+                          <Box
                             sx={{
-                              height: 6,
-                              borderRadius: 3,
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
                               mb: 1.5,
-                              bgcolor: alpha(theme.palette.success.main, 0.1),
-                            }}
-                          />
-                          <Grid container spacing={1}>
-                            <Grid item xs={4}>
-                              <Tooltip title="Valid emails">
-                                <Box>
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                  >
-                                    Valid
-                                  </Typography>
-                                  <Typography
-                                    variant="body2"
-                                    fontWeight="bold"
-                                    color="success.main"
-                                  >
-                                    {batch.valid}
-                                  </Typography>
-                                </Box>
-                              </Tooltip>
-                            </Grid>
-                            <Grid item xs={4}>
-                              <Tooltip title="Risky emails">
-                                <Box>
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                  >
-                                    Risky
-                                  </Typography>
-                                  <Typography
-                                    variant="body2"
-                                    fontWeight="bold"
-                                    color="warning.main"
-                                  >
-                                    {batch.risky}
-                                  </Typography>
-                                </Box>
-                              </Tooltip>
-                            </Grid>
-                            <Grid item xs={4}>
-                              <Tooltip title="Invalid emails">
-                                <Box>
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                  >
-                                    Invalid
-                                  </Typography>
-                                  <Typography
-                                    variant="body2"
-                                    fontWeight="bold"
-                                    color="error.main"
-                                  >
-                                    {batch.invalid}
-                                  </Typography>
-                                </Box>
-                              </Tooltip>
-                            </Grid>
-                          </Grid>
-                        </Box>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Chip
-                            label={`${batch.total} Emails`}
-                            size="small"
-                            sx={{
-                              borderRadius: 6,
-                              height: 24,
-                              bgcolor: alpha(theme.palette.primary.main, 0.1),
-                              color: theme.palette.primary.main,
-                              fontWeight: 500,
-                            }}
-                          />
-                          <Button
-                            size="small"
-                            endIcon={<ArrowForward fontSize="small" />}
-                            onClick={() => handleBatchDetails(batch)}
-                            sx={{
-                              textTransform: "none",
-                              fontWeight: 500,
-                              color: theme.palette.text.primary,
-                              "&:hover": {
-                                backgroundColor: alpha(
-                                  theme.palette.primary.main,
-                                  0.05
-                                ),
-                              },
                             }}
                           >
-                            Details
-                          </Button>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            </CardContent>
-          </StyledCard>
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 600 }}
+                            >
+                              Batch #{batch.id}
+                            </Typography>
+                            <Tooltip title="More options">
+                              <IconButton size="small">
+                                <MoreVert fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: "block", mb: 1.5 }}
+                          >
+                            {new Date(batch.batch_time).toLocaleString(
+                              undefined,
+                              {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                              }
+                            )}
+                          </Typography>
+                          <Box sx={{ mb: 2 }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={(batch.valid / batch.total) * 100}
+                              sx={{
+                                height: 6,
+                                borderRadius: 3,
+                                mb: 1.5,
+                                bgcolor: alpha(theme.palette.success.main, 0.1),
+                              }}
+                            />
+                            <Grid container spacing={1}>
+                              <Grid item xs={4}>
+                                <Tooltip title="Valid emails">
+                                  <Box>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      Valid
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      fontWeight="bold"
+                                      color="success.main"
+                                    >
+                                      {batch.valid}
+                                    </Typography>
+                                  </Box>
+                                </Tooltip>
+                              </Grid>
+                              <Grid item xs={4}>
+                                <Tooltip title="Risky emails">
+                                  <Box>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      Risky
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      fontWeight="bold"
+                                      color="warning.main"
+                                    >
+                                      {batch.risky}
+                                    </Typography>
+                                  </Box>
+                                </Tooltip>
+                              </Grid>
+                              <Grid item xs={4}>
+                                <Tooltip title="Invalid emails">
+                                  <Box>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      Invalid
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      fontWeight="bold"
+                                      color="error.main"
+                                    >
+                                      {batch.invalid}
+                                    </Typography>
+                                  </Box>
+                                </Tooltip>
+                              </Grid>
+                            </Grid>
+                          </Box>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                            }}
+                          >
+                            <Chip
+                              label={`${batch.total} Emails`}
+                              size="small"
+                              sx={{
+                                borderRadius: 6,
+                                height: 24,
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                color: theme.palette.primary.main,
+                                fontWeight: 500,
+                              }}
+                            />
+                            <Button
+                              size="small"
+                              endIcon={<ArrowForward fontSize="small" />}
+                              onClick={() => handleBatchDetails(batch)}
+                              sx={{
+                                textTransform: "none",
+                                fontWeight: 500,
+                                color: theme.palette.text.primary,
+                                "&:hover": {
+                                  backgroundColor: alpha(
+                                    theme.palette.primary.main,
+                                    0.05
+                                  ),
+                                },
+                              }}
+                            >
+                              Details
+                            </Button>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </StyledCard>
+          </Grid>
         </Grid>
       </Grid>
 
