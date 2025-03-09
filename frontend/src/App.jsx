@@ -7,6 +7,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import SingleEmailVerification from "./pages/SingleEmailVerification";
 import BulkEmailVerification from "./pages/BulkEmailVerification";
 import Profile from "./pages/Profile";
+import VerificationHistory from "./pages/VerificationHistory";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="bulk" element={<BulkEmailVerification />} />
           <Route path="single" element={<SingleEmailVerification />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="history" element={<VerificationHistory />} />
         </Route>
       </Routes>
     </Router>

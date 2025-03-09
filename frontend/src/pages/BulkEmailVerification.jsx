@@ -1,3 +1,4 @@
+// src/pages/BulkEmailVerification.jsx
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -26,7 +27,7 @@ import {
   Avatar,
   Fade,
   Zoom,
-  Badge, // still imported if needed elsewhere
+  Badge,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
@@ -92,10 +93,11 @@ const StyledAccordionDetails = styled(AccordionDetails)(({ theme }) => ({
 }));
 
 // ----- Improved Download Button (used in accordions) -----
-// Removed the Badge and count display.
+// Set component="span" so that it doesn't render as a <button> element.
 const DownloadButton = ({ onClick }) => (
   <Tooltip title="Export as CSV">
     <IconButton
+      component="span"
       onClick={(e) => {
         e.stopPropagation();
         onClick();
@@ -119,16 +121,11 @@ const DownloadButton = ({ onClick }) => (
 );
 
 // ----- Improved Email List Item -----
-// Removed the message text and on-hover style.
+// Removed message text and hover effects as per design.
 const EmailListItem = ({ email, status, icon, color, onDelete }) => (
   <ListItem
     sx={{
       borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
-      // Removed hover effect:
-      // "&:hover": {
-      //   backgroundColor: "rgba(0, 0, 0, 0.02)",
-      //   transform: "translateX(2px)",
-      // },
       "&:last-child": {
         borderBottom: "none",
       },
@@ -295,7 +292,7 @@ const EmailResultsChart = ({ summary }) => {
   );
 };
 
-// ----- Enhanced Bulk Email Verification Component -----
+// ----- Updated Bulk Email Verification Component with Batch Saving -----
 const BulkEmailVerification = () => {
   const theme = useTheme();
   const [openModal, setOpenModal] = useState(false);
@@ -305,6 +302,20 @@ const BulkEmailVerification = () => {
   const [activeAccordion, setActiveAccordion] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [verificationProgress, setVerificationProgress] = useState(0);
+
+  // Save the verification batch to backend including user_id (assumed stored in localStorage)
+  const saveVerificationBatch = async (resultsData) => {
+    try {
+      const user_id = localStorage.getItem("userId");
+      await axios.post("http://localhost:3001/api/verification-batch", {
+        user_id,
+        emails: resultsData,
+      });
+      console.log("Verification batch saved successfully");
+    } catch (error) {
+      console.error("Error saving verification batch:", error);
+    }
+  };
 
   const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => setOpenModal(false);
@@ -387,7 +398,7 @@ const BulkEmailVerification = () => {
       );
       clearInterval(progressInterval);
       setVerificationProgress(100);
-      setTimeout(() => {
+      setTimeout(async () => {
         setResults(response.data.results);
         setVerificationProgress(0);
         if (response.data.results.some((r) => r.status === "valid")) {
@@ -397,6 +408,8 @@ const BulkEmailVerification = () => {
         } else {
           setActiveAccordion("invalid");
         }
+        // Save verification batch after processing
+        await saveVerificationBatch(response.data.results);
       }, 500);
     } catch (err) {
       console.error(err);
@@ -1489,6 +1502,38 @@ const BulkEmailVerification = () => {
                 )}
               </Box>
             </Paper>
+          </Box>
+        </Fade>
+      )}
+
+      {loading && (
+        <Fade in={loading}>
+          <Box sx={{ textAlign: "center", my: 6, py: 4 }}>
+            <CircularProgress size={70} thickness={4} />
+            <Box sx={{ mt: 3, mb: 1 }}>
+              <Typography variant="h6">
+                Verifying {emails.length} Emails
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Checking syntax, domain validity, and deliverability
+              </Typography>
+            </Box>
+            {verificationProgress > 0 && (
+              <Box sx={{ width: "70%", mx: "auto", mt: 3 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={verificationProgress}
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 1, display: "block" }}
+                >
+                  {Math.round(verificationProgress)}% Complete
+                </Typography>
+              </Box>
+            )}
           </Box>
         </Fade>
       )}

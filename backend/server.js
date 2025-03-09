@@ -10,8 +10,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- Email Verification Endpoints (as before) ---
-
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const checkDomain = async (domain) => {
@@ -19,12 +17,10 @@ const checkDomain = async (domain) => {
     const mxRecords = await dns.resolveMx(domain);
     if (mxRecords && mxRecords.length > 0) return true;
   } catch (err) {}
-  
   try {
     const aRecords = await dns.resolve(domain, "A");
     if (aRecords && aRecords.length > 0) return true;
   } catch (err) {}
-  
   return false;
 };
 
@@ -71,16 +67,6 @@ app.post("/api/single-verify", async (req, res) => {
     message = "Domain exists but SMTP verification failed, email is risky";
   }
 
-  // Optionally log verification result in the database if you have a table for that
-  try {
-    await pool.query(
-      'INSERT INTO verifications (email, status, message) VALUES (?, ?, ?)',
-      [email, status, message]
-    );
-  } catch (dbError) {
-    console.error("Error logging verification:", dbError);
-  }
-
   res.json({ email, status, message });
 });
 
@@ -118,14 +104,6 @@ app.post("/api/bulk-verify", async (req, res) => {
         status = "risky";
         message = "Domain exists but SMTP verification failed, email is risky";
       }
-      try {
-        await pool.query(
-          'INSERT INTO verifications (email, status, message) VALUES (?, ?, ?)',
-          [email, status, message]
-        );
-      } catch (dbError) {
-        console.error(`Error logging verification for ${email}:`, dbError);
-      }
       return { email, status, message };
     })
   );
@@ -139,6 +117,10 @@ app.use("/api", authRoutes);
 // --- Mount User Routes ---
 const userRoutes = require("./user");
 app.use("/api", userRoutes);
+
+// --- Mount Verification Batch (history) Routes ---
+const historyRoutes = require("./history");
+app.use("/api", historyRoutes);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
