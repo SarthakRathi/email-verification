@@ -6,6 +6,7 @@ import Register from "./Register";
 import DashboardLayout from "./layouts/DashboardLayout";
 import SingleEmailVerification from "./pages/SingleEmailVerification";
 import BulkEmailVerification from "./pages/BulkEmailVerification";
+import Profile from "./pages/Profile";
 
 function App() {
   return (
@@ -17,10 +18,10 @@ function App() {
 
         {/* Dashboard Layout with nested routes */}
         <Route path="/dashboard" element={<DashboardLayout />}>
-          {/* Bulk Verification loads by default */}
           <Route index element={<BulkEmailVerification />} />
           <Route path="bulk" element={<BulkEmailVerification />} />
           <Route path="single" element={<SingleEmailVerification />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Routes>
     </Router>

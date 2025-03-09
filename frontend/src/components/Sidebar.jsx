@@ -19,7 +19,7 @@ import {
   Paper,
   Chip,
 } from "@mui/material";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Dashboard,
   EmailOutlined,
@@ -37,8 +37,9 @@ import {
 const Sidebar = ({ open, onClose, drawerWidth }) => {
   const theme = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  // Define helper functions first
+  // Helper functions to check current route
   const isActive = (path) => location.pathname === path;
   const isPartOfRoute = (path) => location.pathname.startsWith(path);
 
@@ -86,9 +87,14 @@ const Sidebar = ({ open, onClose, drawerWidth }) => {
       text: "Analytics",
       icon: <Speed />,
       path: "/dashboard/analytics",
-      // Removed chip: "New"
     },
   ];
+
+  // Logout function: clear token and navigate to login page
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/");
+  };
 
   return (
     <Drawer
@@ -396,7 +402,7 @@ const Sidebar = ({ open, onClose, drawerWidth }) => {
           </Typography>
         </Box>
 
-        {/* Footer */}
+        {/* Footer with Logout Button */}
         <Box
           sx={{
             p: 2,
@@ -406,8 +412,7 @@ const Sidebar = ({ open, onClose, drawerWidth }) => {
           }}
         >
           <Button
-            component={Link}
-            to="/logout"
+            onClick={handleLogout}
             fullWidth
             variant="outlined"
             color="error"

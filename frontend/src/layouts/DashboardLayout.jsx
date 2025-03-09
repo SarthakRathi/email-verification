@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+// src/layouts/DashboardLayout.jsx
+import React, { useState, useEffect } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   AppBar,
   Toolbar,
@@ -25,14 +26,12 @@ import MenuIcon from "@mui/icons-material/Menu";
 import {
   Notifications as NotificationsIcon,
   Help as HelpIcon,
-  Person as PersonIcon,
-  Mail as MailIcon,
-  Logout as LogoutIcon,
-  CheckCircle as CheckCircleIcon,
   KeyboardArrowDown,
   ViewInAr,
+  CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 import Sidebar from "../components/Sidebar";
+import axios from "axios";
 
 const drawerWidth = 240;
 
@@ -82,50 +81,44 @@ const BreadcrumbChip = styled(Chip)(({ theme }) => ({
 const DashboardLayout = () => {
   const [open, setOpen] = useState(true);
   const [notificationsAnchor, setNotificationsAnchor] = useState(null);
+  const [user, setUser] = useState(null); // state for user details
   const theme = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleDrawerToggle = () => {
     setOpen(!open);
   };
 
-  // Function to get the current page title based on the route
-  const getPageTitle = () => {
-    const path = location.pathname;
-    if (path === "/dashboard") return "Dashboard";
-    if (path === "/dashboard/single") return "Shail Digital";
-    if (path === "/dashboard/bulk") return "Shail Digital";
-    if (path === "/dashboard/history") return "Verification History";
-    if (path === "/dashboard/analytics") return "Analytics";
-    return "Dashboard";
-  };
-
-  // Get the breadcrumb unless on single or bulk pages
-  const getBreadcrumb = () => {
-    const path = location.pathname;
-    if (
-      path === "/dashboard" ||
-      path === "/dashboard/single" ||
-      path === "/dashboard/bulk"
-    )
-      return null;
-
-    const segments = path.split("/").filter(Boolean);
-    if (segments.length > 1) {
-      return segments[1].charAt(0).toUpperCase() + segments[1].slice(1);
+  // Fetch user details when component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      axios
+        .get("http://localhost:3001/api/user", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((response) => {
+          setUser(response.data);
+        })
+        .catch((err) => {
+          console.error("Error fetching user:", err);
+        });
     }
-    return null;
-  };
+  }, []);
 
-  const breadcrumb = getBreadcrumb();
-
-  // Handle notifications
+  // Notifications handlers
   const handleNotificationsOpen = (event) => {
     setNotificationsAnchor(event.currentTarget);
   };
 
   const handleNotificationsClose = () => {
     setNotificationsAnchor(null);
+  };
+
+  // Navigate to profile page on account click
+  const handleAccountClick = () => {
+    navigate("/dashboard/profile");
   };
 
   return (
@@ -150,7 +143,7 @@ const DashboardLayout = () => {
             <MenuIcon />
           </IconButton>
 
-          {/* Mobile Logo - shown when sidebar is closed or on mobile */}
+          {/* Mobile Logo */}
           <Box
             sx={{
               display: { xs: "flex", md: open ? "none" : "flex" },
@@ -202,22 +195,12 @@ const DashboardLayout = () => {
                 display: { xs: "none", sm: "block" },
               }}
             >
-              {getPageTitle()}
+              Shail Digital
             </Typography>
-            {breadcrumb && (
-              <Box sx={{ display: "flex", alignItems: "center", ml: 2 }}>
-                <BreadcrumbChip
-                  label={breadcrumb}
-                  size="small"
-                  icon={<KeyboardArrowDown fontSize="small" />}
-                />
-              </Box>
-            )}
           </Box>
 
           {/* Right Side Actions */}
           <Box sx={{ ml: "auto", display: "flex", alignItems: "center" }}>
-            {/* Notifications */}
             <Tooltip title="Notifications">
               <HeaderButton onClick={handleNotificationsOpen}>
                 <Badge badgeContent={4} color="error">
@@ -226,18 +209,16 @@ const DashboardLayout = () => {
               </HeaderButton>
             </Tooltip>
 
-            {/* Removed Search and Settings from header */}
-
-            {/* Help */}
             <Tooltip title="Help">
               <HeaderButton>
                 <HelpIcon fontSize="small" />
               </HeaderButton>
             </Tooltip>
 
-            {/* User Profile (no dropdown) */}
+            {/* User Profile with fetched user name */}
             <Box sx={{ ml: 2, display: "flex", alignItems: "center" }}>
               <Button
+                onClick={handleAccountClick}
                 sx={{
                   borderRadius: 8,
                   textTransform: "none",
@@ -256,7 +237,7 @@ const DashboardLayout = () => {
                     boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
                   }}
                 >
-                  U
+                  {user ? user.fullName.charAt(0).toUpperCase() : "U"}
                 </Avatar>
                 <Box
                   sx={{
@@ -269,7 +250,7 @@ const DashboardLayout = () => {
                     variant="body2"
                     sx={{ fontWeight: 600, lineHeight: 1.2 }}
                   >
-                    User Name
+                    {user ? user.fullName : "User Name"}
                   </Typography>
                 </Box>
               </Button>
