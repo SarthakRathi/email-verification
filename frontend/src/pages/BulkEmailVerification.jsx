@@ -1506,38 +1506,6 @@ const BulkEmailVerification = () => {
         </Fade>
       )}
 
-      {loading && (
-        <Fade in={loading}>
-          <Box sx={{ textAlign: "center", my: 6, py: 4 }}>
-            <CircularProgress size={70} thickness={4} />
-            <Box sx={{ mt: 3, mb: 1 }}>
-              <Typography variant="h6">
-                Verifying {emails.length} Emails
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Checking syntax, domain validity, and deliverability
-              </Typography>
-            </Box>
-            {verificationProgress > 0 && (
-              <Box sx={{ width: "70%", mx: "auto", mt: 3 }}>
-                <LinearProgress
-                  variant="determinate"
-                  value={verificationProgress}
-                  sx={{ height: 8, borderRadius: 4 }}
-                />
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ mt: 1, display: "block" }}
-                >
-                  {Math.round(verificationProgress)}% Complete
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        </Fade>
-      )}
-
       <AddListModal
         open={openModal}
         onClose={handleCloseModal}
