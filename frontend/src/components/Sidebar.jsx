@@ -83,11 +83,6 @@ const Sidebar = ({ open, onClose, drawerWidth }) => {
       icon: <History />,
       path: "/dashboard/history",
     },
-    {
-      text: "Analytics",
-      icon: <Speed />,
-      path: "/dashboard/analytics",
-    },
   ];
 
   // Logout function: clear token and navigate to login page

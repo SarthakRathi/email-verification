@@ -122,6 +122,11 @@ app.use("/api", userRoutes);
 const historyRoutes = require("./history");
 app.use("/api", historyRoutes);
 
+// server.js (or your main app file)
+const trendsRoutes = require("./trends");
+app.use("/api", trendsRoutes);
+
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

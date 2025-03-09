@@ -201,14 +201,6 @@ const DashboardLayout = () => {
 
           {/* Right Side Actions */}
           <Box sx={{ ml: "auto", display: "flex", alignItems: "center" }}>
-            <Tooltip title="Notifications">
-              <HeaderButton onClick={handleNotificationsOpen}>
-                <Badge badgeContent={4} color="error">
-                  <NotificationsIcon fontSize="small" />
-                </Badge>
-              </HeaderButton>
-            </Tooltip>
-
             <Tooltip title="Help">
               <HeaderButton>
                 <HelpIcon fontSize="small" />
@@ -224,9 +216,7 @@ const DashboardLayout = () => {
                   textTransform: "none",
                   p: 1,
                   color: theme.palette.text.primary,
-                  "&:hover": {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                  },
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
                 }}
               >
                 <Avatar
@@ -258,87 +248,6 @@ const DashboardLayout = () => {
           </Box>
         </Toolbar>
       </StyledAppBar>
-
-      {/* Notifications Menu */}
-      <Menu
-        anchorEl={notificationsAnchor}
-        open={Boolean(notificationsAnchor)}
-        onClose={handleNotificationsClose}
-        transformOrigin={{ horizontal: "right", vertical: "top" }}
-        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-        PaperProps={{
-          elevation: 3,
-          sx: {
-            mt: 1.5,
-            width: 320,
-            maxHeight: 380,
-            borderRadius: 2,
-            overflow: "auto",
-            "&:before": {
-              content: '""',
-              display: "block",
-              position: "absolute",
-              top: -6,
-              right: 14,
-              width: 12,
-              height: 12,
-              bgcolor: "background.paper",
-              transform: "rotate(45deg)",
-              zIndex: 0,
-            },
-          },
-        }}
-      >
-        <Box
-          sx={{
-            p: 2,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            Notifications
-          </Typography>
-          <Chip label="4 new" size="small" color="primary" />
-        </Box>
-        <Divider />
-        <MenuItem onClick={handleNotificationsClose} sx={{ py: 1.5 }}>
-          <ListItemIcon>
-            <Avatar
-              sx={{
-                bgcolor: alpha(theme.palette.success.main, 0.1),
-                color: theme.palette.success.main,
-              }}
-            >
-              <CheckCircleIcon fontSize="small" />
-            </Avatar>
-          </ListItemIcon>
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              Bulk Verification Complete
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              1000 emails processed successfully
-            </Typography>
-          </Box>
-        </MenuItem>
-        <Divider />
-        <Box sx={{ p: 1.5, textAlign: "center" }}>
-          <Button
-            variant="text"
-            fullWidth
-            onClick={handleNotificationsClose}
-            sx={{
-              borderRadius: 6,
-              textTransform: "none",
-              fontSize: "0.875rem",
-            }}
-          >
-            View All Notifications
-          </Button>
-        </Box>
-      </Menu>
 
       <Sidebar
         open={open}
