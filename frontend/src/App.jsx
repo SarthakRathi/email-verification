@@ -1,6 +1,11 @@
 // src/App.jsx
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Login from "./Login";
 import Register from "./Register";
@@ -23,6 +28,15 @@ const theme = createTheme({
   },
 });
 
+// Inline ProtectedRoute component
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -32,8 +46,15 @@ function App() {
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Dashboard Layout with nested routes */}
-          <Route path="/dashboard" element={<DashboardLayout />}>
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard/*"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route index element={<Dashboard />} />
             <Route path="bulk" element={<BulkEmailVerification />} />
             <Route path="single" element={<SingleEmailVerification />} />
