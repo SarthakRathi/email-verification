@@ -10,26 +10,13 @@ import {
   styled,
   Box,
   Avatar,
-  Badge,
   Chip,
   Button,
   alpha,
   useTheme,
-  Tooltip,
-  Menu,
-  MenuItem,
-  Divider,
-  ListItemIcon,
-  ListItemText,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import {
-  Notifications as NotificationsIcon,
-  Help as HelpIcon,
-  KeyboardArrowDown,
-  ViewInAr,
-  CheckCircle as CheckCircleIcon,
-} from "@mui/icons-material";
+import { ViewInAr } from "@mui/icons-material";
 import Sidebar from "../components/Sidebar";
 import axios from "axios";
 
@@ -201,12 +188,6 @@ const DashboardLayout = () => {
 
           {/* Right Side Actions */}
           <Box sx={{ ml: "auto", display: "flex", alignItems: "center" }}>
-            <Tooltip title="Help">
-              <HeaderButton>
-                <HelpIcon fontSize="small" />
-              </HeaderButton>
-            </Tooltip>
-
             {/* User Profile with fetched user name */}
             <Box sx={{ ml: 2, display: "flex", alignItems: "center" }}>
               <Button
